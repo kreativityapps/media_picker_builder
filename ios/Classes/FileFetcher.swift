@@ -211,16 +211,12 @@ class FileFetcher {
         var saved = false
 
         PHCachingImageManager.default().requestImage(for: asset, targetSize: imageSize, contentMode: imageContentMode, options: options) { (image, info) in
-            if(image != nil) {
-                if let imageRep = UIImagePNGRepresentation(image!) {
-                    do {
-                        try imageRep.write(to: destination)
-                        saved = true
-                    } catch {
-                        print(error)
-                        saved = false
-                    }
-                }
+            do {
+                try image!.pngData()?.write(to: destination)
+                saved = true
+            } catch (let error) {
+                print(error)
+                saved = false
             }
         }
         return saved

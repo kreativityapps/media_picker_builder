@@ -25,8 +25,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: ebd43b443038e611b86ede96e613bd6033c49497
 
-<<<<<<< HEAD
 COCOAPODS: 1.9.3
-=======
-COCOAPODS: 1.9.1
->>>>>>> Add support for retrieving the original file name
