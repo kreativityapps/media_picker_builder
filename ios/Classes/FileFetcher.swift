@@ -91,6 +91,7 @@ class FileFetcher {
         
         var mediaFile: MediaFile? = nil
         var url: String? = nil
+        var fileName: String? = nil
         var duration: Double? = nil
         var orientation: Int = 0
         
@@ -109,16 +110,16 @@ class FileFetcher {
         if (asset.mediaType ==  .image) {
             
             if loadPath {
-         
-                (url, orientation) = getFullSizeImageURLAndOrientation(for: asset)
-
+                
+                (url, orientation, fileName) = getFullSizeImageURLAndOrientation(for: asset)
+                
                 // Not working since iOS 13
                 // (url, orientation) = getPHImageFileURLKeyAndOrientation(for: asset)
-
+                
             }
-
-
-
+            
+            
+            
             let since1970 = asset.creationDate?.timeIntervalSince1970
             var dateAdded: Int? = nil
             if since1970 != nil {
@@ -132,11 +133,16 @@ class FileFetcher {
                 orientation: orientation,
                 duration: nil,
                 mimeType: nil,
+                fileName: fileName,
                 type: .IMAGE)
-
+            
         } else if (asset.mediaType == .video) {
-
+            
             if loadPath {
+                if #available(iOS 9, *) {
+                    fileName = PHAssetResource.assetResources(for: asset).first?.originalFilename
+                }
+                
                 let semaphore = DispatchSemaphore(value: 0)
                 let options = PHVideoRequestOptions()
                 options.isNetworkAccessAllowed = true
@@ -147,6 +153,9 @@ class FileFetcher {
                     }
                     let avURLAsset = avAsset as? AVURLAsset
                     url = avURLAsset?.url.path
+                    if(fileName==nil) {
+                        fileName = avURLAsset?.url.lastPathComponent
+                    }
                     let durationTime = avAsset?.duration
                     if durationTime != nil {
                         duration = (CMTimeGetSeconds(durationTime!) * 1000).rounded()
@@ -161,7 +170,7 @@ class FileFetcher {
                     duration = nil
                 }
             }
-
+            
             let since1970 = asset.creationDate?.timeIntervalSince1970
             var dateAdded: Int? = nil
             if since1970 != nil {
@@ -175,14 +184,15 @@ class FileFetcher {
                 orientation: 0,
                 duration: duration,
                 mimeType: nil,
+                fileName: fileName,
                 type: .VIDEO)
-
+            
         }
         return mediaFile
     }
-
+    
     private static func generateThumbnail(asset: PHAsset, destination: URL) -> Bool {
-
+        
         let scale = UIScreen.main.scale
         let imageSize = CGSize(width: 79 * scale, height: 79 * scale)
         let imageContentMode: PHImageContentMode = .aspectFill
@@ -198,11 +208,11 @@ class FileFetcher {
                 print(error)
                 saved = false
             }
-
+            
         }
         return saved
     }
-
+    
     private static func getCachePath(for identifier: String, modificationDate: Int) -> URL {
         let fileName = Data(identifier.utf8).base64EncodedString().replacingOccurrences(of: "==", with: "")
         let path = try! FileManager.default
@@ -210,23 +220,32 @@ class FileFetcher {
             .appendingPathComponent("\(fileName)-\(modificationDate).png")
         return path
     }
-
-    private static func getFullSizeImageURLAndOrientation(for asset: PHAsset)-> (String?, Int) {
-        var url: String? = nil
+    
+    private static func getFullSizeImageURLAndOrientation(for asset: PHAsset)-> (String?, Int, String?) {
+        var fileName: String? = nil
+        if #available(iOS 9, *) {
+            fileName = PHAssetResource.assetResources(for: asset).first?.originalFilename
+        }
+        
+        var url: URL? = nil
         var orientation: Int = 0
         let semaphore = DispatchSemaphore(value: 0)
         let options2 = PHContentEditingInputRequestOptions()
         options2.isNetworkAccessAllowed = true
         asset.requestContentEditingInput(with: options2){(input, info) in
             orientation = Int(input?.fullSizeImageOrientation ?? 0)
-            url = input?.fullSizeImageURL?.path
+            url = input?.fullSizeImageURL
             semaphore.signal()
         }
         semaphore.wait()
-
-        return (url, orientation)
+        
+        if (fileName==nil) {
+            fileName = url?.lastPathComponent
+        }
+        
+        return (url?.path, orientation, fileName)
     }
-
+    
     private static func getPHImageFileURLKeyAndOrientation(for asset: PHAsset) -> (String?, Int) {
         var url: String? = nil
         var orientation: Int = 0
@@ -239,7 +258,7 @@ class FileFetcher {
         }
         return (url, orientation)
     }
-
+    
     private static func convertAvcompositionToAvasset(avComp: AVComposition) -> AVAsset? {
         let exporter = AVAssetExportSession(asset: avComp, presetName: AVAssetExportPresetHighestQuality)
         let randNum:Int = Int(arc4random())
