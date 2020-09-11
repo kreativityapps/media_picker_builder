@@ -158,7 +158,6 @@ class FileFetcher {
                     val fileId = cursor.getLong(0)          //MediaStore.Video.Media._ID
                     val fileDateAdded = cursor.getLong(1)   //MediaStore.Video.Media.DATE_ADDED
                     val filePath = cursor.getString(2)      //MediaStore.Video.Media.DATA
-                    val albumName = cursor.getString(3)     //MediaStore.Video.Media.BUCKET_DISPLAY_NAME
                     val albumId = cursor.getLong(4)         //MediaStore.Video.Media.BUCKET_ID
                     val mimeType = cursor.getString(5)      //MediaStore.Video.Media.MIME_TYPE
                     val duration = cursor.getLong(6)        //MediaStore.Video.Media.DURATION
@@ -166,7 +165,7 @@ class FileFetcher {
                     return MediaFile(
                             fileId,
                             albumId,
-                            albumName,
+                            '',
                             fileDateAdded,
                             filePath,
                             null,
@@ -180,7 +179,6 @@ class FileFetcher {
                     val fileId = cursor.getLong(0)          //MediaStore.Images.Media._ID
                     val fileDateAdded = cursor.getLong(1)   //MediaStore.Images.Media.DATE_ADDED
                     val filePath = cursor.getString(2)      //MediaStore.Images.Media.DATA
-                    val albumName = cursor.getString(3)     //MediaStore.Images.Media.BUCKET_DISPLAY_NAME
                     val albumId = cursor.getLong(4)         //MediaStore.Images.Media.BUCKET_ID
                     val orientation = cursor.getInt(5)      //MediaStore.Images.Media.ORIENTATION
                     val mimeType = cursor.getString(6)      //MediaStore.Images.Media.MIME_TYPE
@@ -188,7 +186,7 @@ class FileFetcher {
                     return MediaFile(
                             fileId,
                             albumId,
-                            albumName,
+                            '',
                             fileDateAdded,
                             filePath,
                             null,
