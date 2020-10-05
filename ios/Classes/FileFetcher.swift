@@ -3,6 +3,7 @@
 //  file_picker
 //
 //  Created by Kasem Mohamed on 6/29/19.
+//  Edited by Stevan Medic on 10/05/20.
 //
 
 import Foundation
@@ -260,6 +261,129 @@ class FileFetcher {
         })
         semaphore.wait()
         return avAsset
+    }
+    
+    static func getVideosAndLivePhotos(_ selectedDate: Date, duration: Int) -> [MediaFile] {
+        var files = [MediaFile]()
+        let phAssets = PHAsset.fetchVideosFor(date: selectedDate, duration: duration)
+        if phAssets.count > 0 {
+            for item in phAssets {
+                guard let file = getPlayableFile(for: item, loadPath: false) else {
+                    continue
+                }
+                files.append(file)
+            }
+        }
+        return files
+    }
+    
+    // Get video file or live photo
+    static func getPlayableFile(for asset: PHAsset, loadPath: Bool) -> MediaFile? {
+        
+        var mediaFile: MediaFile? = nil
+        var url: String? = nil
+        var duration: Double? = nil
+        var orientation: Int = 0
+        
+        let modificationDate = Int((asset.value(forKey: "modificationDate") as! Date).timeIntervalSince1970)
+        var cachePath: URL? = getCachePath(for: asset.localIdentifier, modificationDate: modificationDate)
+        if !FileManager.default.fileExists(atPath: cachePath!.path) {
+            if !generateThumbnail(asset: asset, destination: cachePath!) {
+                cachePath = nil
+            }
+        }
+        
+        if asset.playbackStyle == .livePhoto {
+            mediaFile = MediaFile.init(
+                id: asset.localIdentifier,
+                dateAdded: asset.getCreationDateSince1970(),
+                path: nil,
+                thumbnailPath: cachePath?.path,
+                orientation: orientation,
+                duration: nil,
+                mimeType: nil,
+                type: .IMAGE)
+        } else if asset.playbackStyle == .video {
+            if loadPath {
+                let semaphore = DispatchSemaphore(value: 0)
+                let options = PHVideoRequestOptions()
+                options.isNetworkAccessAllowed = true
+                PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { (avAssetData, _, info) in
+                    var avAsset = avAssetData
+                    if avAssetData is AVComposition {
+                        avAsset = convertAvcompositionToAvasset(avComp: (avAssetData as? AVComposition)!)
+                    }
+                    let avURLAsset = avAsset as? AVURLAsset
+                    url = avURLAsset?.url.path
+                    let durationTime = avAsset?.duration
+                    if durationTime != nil {
+                        duration = (CMTimeGetSeconds(durationTime!) * 1000).rounded()
+                        UserDefaults.standard.set(duration, forKey: "duration-\(asset.localIdentifier)")
+                    }
+                    semaphore.signal()
+                }
+                semaphore.wait()
+            } else {
+                duration = UserDefaults.standard.double(forKey: "duration-\(asset.localIdentifier)")
+                if duration == 0 {
+                    duration = nil
+                }
+            }
+            
+            mediaFile = MediaFile.init(
+                id: asset.localIdentifier,
+                dateAdded: asset.getCreationDateSince1970(),
+                path: url,
+                thumbnailPath: cachePath?.path,
+                orientation: 0,
+                duration: duration,
+                mimeType: nil,
+                type: .VIDEO)
+        }
+        return mediaFile
+    }
+    
+    static func getLivePhotoPath(for fileId: String) -> String? {
+        guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [fileId], options: .none).firstObject else {
+            return nil
+        }
+        
+        let livePhotoResources = PHAssetResource.assetResources(for: asset)
+        if let resource = livePhotoResources.first(where: ({ $0.type == PHAssetResourceType.pairedVideo })) {
+            let semaphore = DispatchSemaphore(value: 0)
+            var filePath: String? = nil
+            let photoDir = AssetFilesHelper.generateFolderForLivePhotoResources()!
+            AssetFilesHelper.saveAssetResource(resource: resource, inDirectory: photoDir, buffer: nil, error: nil, creationDate: asset.creationDate) { url in
+                filePath = url?.path
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return filePath
+        }
+        return nil
+    }
+    
+    static func getVideoPath(for fileId: String) -> String? {
+        guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [fileId], options: .none).firstObject else {
+            return nil
+        }
+        
+        var url: String? = nil
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        let options = PHVideoRequestOptions()
+        options.isNetworkAccessAllowed = true
+        PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { (avAssetData, _, info) in
+            var avAsset = avAssetData
+            if avAssetData is AVComposition {
+                avAsset = convertAvcompositionToAvasset(avComp: (avAssetData as? AVComposition)!)
+            }
+            let avURLAsset = avAsset as? AVURLAsset
+            url = avURLAsset?.url.path
+            semaphore.signal()
+        }
+        semaphore.wait()
+        return url
     }
 }
 

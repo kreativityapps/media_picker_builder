@@ -25,24 +25,46 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Picker Demo'),
         ),
         body: Center(
-          child: RaisedButton(
-            child: const Text("Albums"),
-            onPressed: () {
-              _checkPermission().then((granted) {
-                if (!granted) return;
-
-                // To build your own custom picker use this api
-//                MediaPickerBuilder.getAlbums(
-//                  withImages: true,
-//                  withVideos: true,
-//                ).then((albums) {
-//                  print(albums);
-//                });
-
-                // If you are happy with the example picker then you use this!
-                _buildPicker();
-              });
-            },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              RaisedButton(
+                child: const Text("Albums"),
+                onPressed: () {
+                  _checkPermission().then((granted) {
+                    if (!granted) return;
+                    // To build your own custom picker use this api
+                    MediaPickerBuilder.getAlbums(
+                      withImages: true,
+                      withVideos: true,
+                    ).then((albums) {
+                      print(albums);
+                    });
+                    // If you are happy with the example picker then you use this!
+                    _buildPicker();
+                  });
+                },
+              ),
+              SizedBox(
+                height: 10.0,
+              ),
+              RaisedButton(
+                child: const Text("Videos and live photos"),
+                onPressed: () {
+                  _checkPermission().then((granted) {
+                    if (!granted) return;
+                    MediaPickerBuilder.getVideosAndLivePhotos(
+                      dateInMs: DateTime.now().millisecondsSinceEpoch,
+                      durationInSeconds: 1,
+                    ).then((albums) {
+                      print(albums);
+                    });
+                    // If you are happy with the example picker then you use this!
+                    _buildPicker();
+                  });
+                },
+              ),
+            ],
           ),
         ),
       ),
