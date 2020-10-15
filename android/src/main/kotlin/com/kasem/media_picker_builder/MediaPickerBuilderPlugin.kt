@@ -3,6 +3,9 @@ package com.kasem.media_picker_builder
 import android.content.Context
 import android.os.Handler
 import android.util.Log
+import com.kasem.media_picker_builder.model.MediaFile
+import com.kasem.media_picker_builder.providers.FileFetcher
+import com.kasem.media_picker_builder.providers.ThumbnailImageProvider
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -45,7 +48,7 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                 }
                 executor.execute {
                     try {
-                        val thumbnail = FileFetcher.getThumbnail(
+                        val thumbnail = ThumbnailImageProvider.getThumbnail(
                                 context,
                                 fileId.toLong(),
                                 MediaFile.MediaType.values()[type]
