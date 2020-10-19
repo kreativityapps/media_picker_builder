@@ -11,7 +11,7 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "getMediaFilesBetween":
+        case "v2/getMediaAssets":
             guard let withImages = arguments["withImages"] as? Bool else {
                 result(FlutterError(code: "INVALID_ARGUMENTS", message: "withImages must not be null", details: nil))
                 return
@@ -43,8 +43,8 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
             
             let assets = MediaFetcher.getAssetsWithDateRange(start: startDate, end: endDate, types: types)
             
-            let mediaFiles = assets.compactMap { (asset) -> MediaFile? in
-                return MediaFetcher.getMediaFileFor(asset: asset)
+            let mediaFiles = assets.compactMap { (asset) -> MediaAsset? in
+                return MediaFetcher.getMediaAsset(for: asset)
             }
             
             do {
@@ -55,6 +55,32 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
             } catch {
                 result(FlutterError(code: "ERROR", message: error.localizedDescription, details: nil))
             }
+            
+        case "v2/getMediaFile":
+            guard let fileId = arguments["fileId"] as? String else {
+                result(FlutterError(code: "INVALID_ARGUMENTS", message: "fileId must not be null", details: nil))
+                return
+            }
+            
+            guard let asset = MediaFetcher.getAsset(with: fileId) else {
+                result(FlutterError(code: "NOT_FOUND", message: "Unable to get the file", details: nil))
+                return
+            }
+            
+            MediaFetcher.getMediaFile(for: asset) { (progress) in
+                
+            } completion: { (file) in
+                let encoder = JSONEncoder()
+                do {
+                    let data = try encoder.encode(file)
+                    let json = String(data: data, encoding: .utf8)!
+                    
+                    result(json)
+                } catch {
+                    result(FlutterError(code: "NOT_FOUND", message: "Unable to get the file", details: nil))
+                }
+            }
+            
         case "getAlbums":
             guard let withImages = (call.arguments as? Dictionary<String, Any>)?["withImages"] as? Bool else {
                 result(FlutterError(code: "INVALID_ARGUMENTS", message: "withImages must not be null", details: nil))

@@ -34,7 +34,7 @@ class _ImageGridPageState extends State<ImageGridPage> {
     final start = DateTime(now.year, now.month);
     final end = DateTime(now.year, now.month, 30);
 
-    MediaPickerBuilder.getMediaFilesBetween(
+    MediaPickerBuilder.getMediaAssets(
       start: start,
       end: end,
       withImages: true,
@@ -96,7 +96,7 @@ class _ImageGridPageState extends State<ImageGridPage> {
                               width: _imageSize.width,
                               height: _imageSize.height,
                             ),
-                            if (mediaFile.type == MediaType.VIDEO) ...[
+                            if (mediaFile.type == MediaType.video) ...[
                               Align(
                                 child: Text('${mediaFile.durationInSeconds}', style: captionStyle),
                                 alignment: Alignment.bottomRight,

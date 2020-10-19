@@ -30,8 +30,8 @@ struct MediaFile : Codable {
 }
 
 enum MediaType: Int, Codable {
-    case IMAGE
-    case VIDEO
+    case image
+    case video
 }
 
 

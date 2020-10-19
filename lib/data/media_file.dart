@@ -34,6 +34,7 @@ class MediaFile {
 
   /// Supported on Android only
   String mimeType;
+
   MediaType type;
 
   OrientationType get orientationType {
@@ -67,5 +68,5 @@ class MediaFile {
   int get hashCode => id.hashCode;
 }
 
-enum MediaType { IMAGE, VIDEO }
+enum MediaType { image, video }
 enum OrientationType { portrait, landscape }

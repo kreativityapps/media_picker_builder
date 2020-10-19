@@ -61,10 +61,9 @@ class GalleryWidgetItemState extends State<GalleryWidgetItem> {
         children: [
           widget.mediaFile.thumbnailPath != null
               ? RotatedBox(
-                  quarterTurns: Platform.isIOS || widget.mediaFile.type == MediaType.VIDEO
+                  quarterTurns: Platform.isIOS || widget.mediaFile.type == MediaType.video
                       ? 0
-                      : MediaPickerBuilder.orientationToQuarterTurns(
-                          widget.mediaFile.orientation),
+                      : MediaPickerBuilder.orientationToQuarterTurns(widget.mediaFile.orientation),
                   child: Image.file(
                     File(widget.mediaFile.thumbnailPath),
                     fit: BoxFit.cover,
@@ -75,16 +74,14 @@ class GalleryWidgetItemState extends State<GalleryWidgetItem> {
                     fileId: widget.mediaFile.id,
                     type: widget.mediaFile.type,
                   ),
-                  builder:
-                      (BuildContext context, AsyncSnapshot<String> snapshot) {
+                  builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
                     if (snapshot.hasData) {
                       var thumbnail = snapshot.data;
                       widget.mediaFile.thumbnailPath = thumbnail;
                       return RotatedBox(
-                        quarterTurns: Platform.isIOS || widget.mediaFile.type == MediaType.VIDEO
+                        quarterTurns: Platform.isIOS || widget.mediaFile.type == MediaType.video
                             ? 0 // iOS thumbnails have correct orientation
-                            : MediaPickerBuilder.orientationToQuarterTurns(
-                                widget.mediaFile.orientation),
+                            : MediaPickerBuilder.orientationToQuarterTurns(widget.mediaFile.orientation),
                         child: Image.file(
                           File(thumbnail),
                           fit: BoxFit.cover,
@@ -99,9 +96,7 @@ class GalleryWidgetItemState extends State<GalleryWidgetItem> {
                       );
                     }
                   }),
-          widget.mediaFile.type == MediaType.VIDEO
-              ? Icon(Icons.play_circle_filled, color: Colors.white, size: 24)
-              : const SizedBox()
+          widget.mediaFile.type == MediaType.video ? Icon(Icons.play_circle_filled, color: Colors.white, size: 24) : const SizedBox()
         ],
       ),
     );

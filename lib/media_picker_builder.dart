@@ -1,16 +1,51 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:media_picker_builder/data/album.dart';
+import 'package:media_picker_builder/data/media_asset.dart';
 import 'package:media_picker_builder/data/media_file.dart';
 import 'package:meta/meta.dart';
 
 import 'data/media_file.dart';
 
 class MediaPickerBuilder {
-  static const MethodChannel _channel =
-      const MethodChannel('media_picker_builder');
+  static const MethodChannel _channel = const MethodChannel('media_picker_builder');
+
+  static Future<List<MediaAsset>> getMediaAssets({
+    @required DateTime start,
+    @required DateTime end,
+    bool withImages = true,
+    bool withVideos = true,
+  }) async {
+    assert(start != null);
+    assert(end != null);
+
+    final String json = await _channel.invokeMethod(
+      "v2/getMediaAssets",
+      {
+        "startDate": start.millisecondsSinceEpoch / 1000,
+        "endDate": end.millisecondsSinceEpoch / 1000,
+        "withImages": withImages,
+        "withVideos": withVideos,
+      },
+    );
+
+    final assets = await compute(_jsonToMediaAssets, json);
+
+    return assets;
+  }
+
+  static Future<MediaFile> retrieveMediaFile(MediaFile file) async {
+    assert(file != null);
+
+    final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": file.id});
+
+    final newFile = await compute(_jsonToMediaFile, json);
+
+    return newFile;
+  }
 
   /// Gets list of albums and its content based on the required flags.
   /// This method will also return the thumbnails IF it was already generated.
@@ -97,9 +132,7 @@ class MediaPickerBuilder {
       },
     );
     final decoded = jsonDecode(json) as List;
-    return decoded
-        .map((i) => MediaFile.fromJson(i as Map<String, dynamic>))
-        .toList();
+    return decoded.map((i) => MediaFile.fromJson(i as Map<String, dynamic>)).toList();
   }
 
   /// Get path of a live photo (iOS only)
@@ -131,4 +164,25 @@ class MediaPickerBuilder {
         return 0;
     }
   }
+}
+
+MediaFile _jsonToMediaFile(dynamic json) {
+  final decoded = jsonDecode(json) as Map;
+  final Map<String, dynamic> map = Map.castFrom(decoded);
+
+  return MediaFile.fromJson(map);
+}
+
+List<MediaAsset> _jsonToMediaAssets(dynamic json) {
+  final decoded = jsonDecode(json) as List;
+  final List<Map<String, dynamic>> list = List.castFrom(decoded);
+
+  return list.map<MediaAsset>((e) => MediaAsset.fromJson(e)).toList();
+}
+
+List<Album> _jsonToAlbums(dynamic json) {
+  final decoded = jsonDecode(json) as List;
+  final List<Map<String, dynamic>> list = List.castFrom(decoded);
+
+  return list.map<Album>((album) => Album.fromJson(album)).toList();
 }
