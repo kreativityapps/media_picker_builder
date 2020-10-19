@@ -142,12 +142,15 @@ class FileFetcher {
                 let options = PHVideoRequestOptions()
                 options.isNetworkAccessAllowed = true
                 PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { (avAssetData, _, info) in
+                    
                     var avAsset = avAssetData
                     if avAssetData is AVComposition {
                         avAsset = convertAvcompositionToAvasset(avComp: (avAssetData as? AVComposition)!)
                     }
                     let avURLAsset = avAsset as? AVURLAsset
                     url = avURLAsset?.url.path
+
+                    orientation = getVideoOrientation(avAsset: avAssetData!)
                     let durationTime = avAsset?.duration
                     if durationTime != nil {
                         duration = (CMTimeGetSeconds(durationTime!) * 1000).rounded()
@@ -173,13 +176,36 @@ class FileFetcher {
                 dateAdded: dateAdded,
                 path: url,
                 thumbnailPath: cachePath?.path,
-                orientation: 0,
+                orientation: orientation,
                 duration: duration,
                 mimeType: nil,
                 type: .VIDEO)
 
         }
         return mediaFile
+    }
+    
+    private static func getVideoOrientation(avAsset: AVAsset) -> Int {
+        if let t = avAsset.tracks(withMediaType: AVMediaType.video).first?.preferredTransform {
+            // Portrait
+            if(t.a == 0 && t.b == 1.0 && t.c == -1.0 && t.d == 0) {
+                return 90
+            }
+            // PortraitUpsideDown
+            if(t.a == 0 && t.b == -1.0 && t.c == 1.0 && t.d == 0)  {
+                return 270
+            }
+            // LandscapeRight
+            if(t.a == 1.0 && t.b == 0 && t.c == 0 && t.d == 1.0) {
+                return 0
+            }
+            // LandscapeLeft
+            if(t.a == -1.0 && t.b == 0 && t.c == 0 && t.d == -1.0) {
+                return 180
+            }
+           }
+        
+        return 0
     }
 
     private static func generateThumbnail(asset: PHAsset, destination: URL) -> Bool {
