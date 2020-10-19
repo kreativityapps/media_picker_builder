@@ -16,8 +16,7 @@ class MediaPickerBuilder {
   static Future<List<MediaAsset>> getMediaAssets({
     @required DateTime start,
     @required DateTime end,
-    bool withImages = true,
-    bool withVideos = true,
+    List<MediaType> types = MediaType.values,
   }) async {
     assert(start != null);
     assert(end != null);
@@ -27,8 +26,7 @@ class MediaPickerBuilder {
       {
         "startDate": start.millisecondsSinceEpoch / 1000,
         "endDate": end.millisecondsSinceEpoch / 1000,
-        "withImages": withImages,
-        "withVideos": withVideos,
+        "types": types.map((e) => e.index).toList(),
       },
     );
 

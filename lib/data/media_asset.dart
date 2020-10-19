@@ -46,7 +46,7 @@ class MediaAsset {
       id: json['id'],
       dateAdded: json['dateAdded'],
       orientation: json['orientation'],
-      duration: json['duration'],
+      duration: (json['duration'] as num)?.toDouble(),
       type: MediaType.values[json['type']],
     );
   }

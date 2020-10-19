@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:media_picker_builder/data/media_file.dart';
 import 'package:media_picker_builder/media_picker_builder.dart';
+import 'package:media_picker_builder_example/grid/image_grid_page.dart';
 import 'package:media_picker_builder_example/picker/picker_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -64,11 +65,35 @@ class _MyAppState extends State<MyApp> {
                   });
                 },
               ),
+              RaisedButton(
+                child: Text('Date Range'),
+                onPressed: () {
+                  _showDateRangePicker();
+                },
+              )
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _showDateRangePicker() async {
+    final granted = await _checkPermission();
+
+    if (!granted) return;
+
+    final range = await showDateRangePicker(
+      context: navigatorKey.currentState.overlay.context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
+    );
+
+    final route = MaterialPageRoute(
+      builder: (context) => ImageGridPage(range: range),
+    );
+
+    Navigator.push(navigatorKey.currentContext, route);
   }
 
   _buildPicker() {

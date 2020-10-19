@@ -7,7 +7,9 @@ import 'package:media_picker_builder_example/grid/image_item.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 class ImageGridPage extends StatefulWidget {
-  ImageGridPage({Key key}) : super(key: key);
+  ImageGridPage({@required this.range, Key key}) : super(key: key);
+
+  final DateTimeRange range;
 
   @override
   _ImageGridPageState createState() => _ImageGridPageState();
@@ -30,21 +32,25 @@ class _ImageGridPageState extends State<ImageGridPage> {
   void initState() {
     super.initState();
 
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month);
-    final end = DateTime(now.year, now.month, 30);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      refresh();
+    });
+  }
 
-    MediaPickerBuilder.getMediaAssets(
+  Future<void> refresh() async {
+    final start = widget.range.start;
+    final end = widget.range.end;
+
+    final files = await MediaPickerBuilder.getMediaAssets(
       start: start,
       end: end,
-      withImages: true,
-      withVideos: false,
-    ).then((files) {
-      final items = files.map((e) => MediaItem(e)).toList();
+      types: [MediaType.video, MediaType.livePhoto],
+    );
 
-      setState(() {
-        _items = items;
-      });
+    final items = files.map((e) => MediaItem(e)).toList();
+
+    setState(() {
+      _items = items;
     });
   }
 

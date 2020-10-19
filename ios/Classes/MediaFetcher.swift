@@ -24,15 +24,26 @@ class MediaFetcher {
         return asset
     }
     
-    static func getAssetsWithDateRange(start: Date?, end: Date?, types: [PHAssetMediaType]) -> [PHAsset] {
+    static func getAssetsWithDateRange(start: Date?, end: Date?, types: [PHAssetMediaType], includeLivePhotos: Bool) -> [PHAsset] {
         let fetchOptions = PHFetchOptions()
         
         var predicates: [NSPredicate] = []
+        
+        let calendar = Calendar.current
+        
         if let startDate = start {
-            predicates.append(NSPredicate(format: "creationDate > %@", startDate as CVarArg))
+            let date = calendar.startOfDay(for: startDate)
+            
+            predicates.append(NSPredicate(format: "creationDate > %@", date as CVarArg))
         }
         if let endDate = end {
-            predicates.append(NSPredicate(format: "creationDate < %@", endDate as CVarArg))
+            var components = DateComponents()
+            components.day = 1
+            components.second = -1
+            
+            let date = calendar.date(byAdding: components, to: endDate)!
+            
+            predicates.append(NSPredicate(format: "creationDate < %@", date as CVarArg))
         }
         
         var typePredicates: [NSPredicate] = []
@@ -40,9 +51,10 @@ class MediaFetcher {
             typePredicates.append(NSPredicate(format: "mediaType == %i", type.rawValue))
         }
         
-        let typePredicate = NSCompoundPredicate(orPredicateWithSubpredicates: typePredicates)
-        
-        predicates.append(typePredicate)
+        if typePredicates.count > 0 {
+            let predicate = NSCompoundPredicate(orPredicateWithSubpredicates: typePredicates)
+            predicates.append(predicate)
+        }
         
         fetchOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
@@ -56,7 +68,15 @@ class MediaFetcher {
         var assets: [PHAsset] = []
         
         results.enumerateObjects { (asset, index, stop) in
-            assets.append(asset)
+            if #available(iOS 9.1, *) {
+                if !includeLivePhotos && (asset.mediaType == .image && asset.mediaSubtypes.contains(.photoLive)) {
+                    
+                } else {
+                    assets.append(asset)
+                }
+            } else {
+                assets.append(asset)
+            }
         }
         
         return assets

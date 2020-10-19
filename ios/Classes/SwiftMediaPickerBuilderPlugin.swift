@@ -14,12 +14,8 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
         
         switch call.method {
         case "v2/getMediaAssets":
-            guard let withImages = arguments["withImages"] as? Bool else {
+            guard let typeValues = arguments["types"] as? [Int] else {
                 result(FlutterError(code: "INVALID_ARGUMENTS", message: "withImages must not be null", details: nil))
-                return
-            }
-            guard let withVideos = arguments["withVideos"] as? Bool else {
-                result(FlutterError(code: "INVALID_ARGUMENTS", message: "withVideos must not be null", details: nil))
                 return
             }
             guard let startDateValue = arguments["startDate"] as? Double else {
@@ -34,16 +30,26 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
             let startDate = Date(timeIntervalSince1970: startDateValue)
             let endDate = Date(timeIntervalSince1970: endDateValue)
             
-            var types: [PHAssetMediaType] = []
-            if withImages {
-                types.append(PHAssetMediaType.image)
+            var types: Set<PHAssetMediaType> = Set()
+            
+            var includeLivePhotos = false
+            
+            typeValues.forEach { (value) in
+                guard let type = MediaType(rawValue: value) else {
+                    return
+                }
+                
+                switch type {
+                case .video:
+                    types.insert(PHAssetMediaType.video)
+                case .image:
+                    types.insert(PHAssetMediaType.image)
+                case .livePhoto:
+                    includeLivePhotos = true
+                }
             }
             
-            if withVideos {
-                types.append(PHAssetMediaType.video)
-            }
-            
-            let assets = MediaFetcher.getAssetsWithDateRange(start: startDate, end: endDate, types: types)
+            let assets = MediaFetcher.getAssetsWithDateRange(start: startDate, end: endDate, types: Array(types), includeLivePhotos: includeLivePhotos)
             
             let mediaFiles = assets.compactMap { (asset) -> MediaAsset? in
                 return try? MediaAsset(asset: asset)
