@@ -1,4 +1,5 @@
 import 'package:media_picker_builder/data/media_file.dart';
+import 'package:meta/meta.dart';
 
 class MediaAsset {
   /// Unique identifier for the file
@@ -21,11 +22,11 @@ class MediaAsset {
   MediaType type;
 
   MediaAsset({
-    this.id,
-    this.dateAdded,
-    this.orientation,
-    this.duration,
-    this.type,
+    @required this.id,
+    @required this.dateAdded,
+    @required this.orientation,
+    @required this.duration,
+    @required this.type,
   });
 
   OrientationType get orientationType {
@@ -35,6 +36,8 @@ class MediaAsset {
 
     return OrientationType.portrait;
   }
+
+  int get durationInSeconds => duration ~/ 1000;
 
   factory MediaAsset.fromJson(Map<String, dynamic> json) {
     if (json == null) return null;

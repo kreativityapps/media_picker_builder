@@ -84,7 +84,7 @@ class _ImageGridPageState extends State<ImageGridPage> {
                           );
                         }
 
-                        final mediaFile = item.file;
+                        final mediaFile = item.asset;
 
                         return Stack(
                           fit: StackFit.expand,

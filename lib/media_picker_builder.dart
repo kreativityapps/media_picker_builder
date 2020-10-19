@@ -32,9 +32,7 @@ class MediaPickerBuilder {
       },
     );
 
-    final assets = await compute(_jsonToMediaAssets, json);
-
-    return assets;
+    return await compute(_jsonToMediaAssets, json);
   }
 
   static Future<MediaFile> retrieveMediaFile(MediaFile file) async {
@@ -42,9 +40,7 @@ class MediaPickerBuilder {
 
     final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": file.id});
 
-    final newFile = await compute(_jsonToMediaFile, json);
-
-    return newFile;
+    return await compute(_jsonToMediaFile, json);
   }
 
   /// Gets list of albums and its content based on the required flags.
@@ -66,8 +62,8 @@ class MediaPickerBuilder {
         "loadIOSPaths": loadIOSPaths,
       },
     );
-    final encoded = jsonDecode(json);
-    return encoded.map<Album>((album) => Album.fromJson(album)).toList();
+
+    return await compute(_jsonToAlbums, json);
   }
 
   /// Returns the thumbnail path of the media file returned in method [getAlbums].
@@ -143,26 +139,6 @@ class MediaPickerBuilder {
   /// Get path of a video
   static Future<String> getVideoPath(String fileId) async {
     return await _channel.invokeMethod('getVideoPath', {'fileId': fileId});
-  }
-
-  /// A convenient function that converts image orientation to quarter turns for widget [RotatedBox]
-  /// i.e. RotatedBox(
-  ///                  quarterTurns: orientationToQuarterTurns(mediaFile.orientation),
-  ///                  child: Image.file(
-  ///                    File(mediaFile.thumbnailPath),
-  ///                    fit: BoxFit.cover,
-  ///                    )
-  static int orientationToQuarterTurns(int orientationInDegrees) {
-    switch (orientationInDegrees) {
-      case 90:
-        return 1;
-      case 180:
-        return 2;
-      case 270:
-        return 3;
-      default:
-        return 0;
-    }
   }
 }
 

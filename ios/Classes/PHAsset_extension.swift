@@ -9,6 +9,7 @@ import Foundation
 import Photos
 
 extension PHAsset {
+    @available(iOS 9.1, *)
     static func fetchVideosFor(date: Date = Date(), duration: Int = 1) -> [PHAsset] {
         let requestOptions = PHVideoRequestOptions()
         requestOptions.isNetworkAccessAllowed = true
@@ -26,7 +27,7 @@ extension PHAsset {
         
         let fetchResult = PHAsset.fetchAssets(with: fetchOptions)
         fetchResult.enumerateObjects { asset, _, _ in
-            if asset.playbackStyle == .livePhoto || asset.playbackStyle == .video {
+            if asset.mediaType == .video || (asset.mediaType == .image && asset.mediaSubtypes.contains(.photoLive)) {
                 if asset.pixelHeight > asset.pixelWidth { // showing only portrait assets (for now)
                     videoPHAssets.append(asset)
                 }

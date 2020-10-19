@@ -61,9 +61,7 @@ class GalleryWidgetItemState extends State<GalleryWidgetItem> {
         children: [
           widget.mediaFile.thumbnailPath != null
               ? RotatedBox(
-                  quarterTurns: Platform.isIOS || widget.mediaFile.type == MediaType.video
-                      ? 0
-                      : MediaPickerBuilder.orientationToQuarterTurns(widget.mediaFile.orientation),
+                  quarterTurns: widget.mediaFile.orientationToQuarterTurns,
                   child: Image.file(
                     File(widget.mediaFile.thumbnailPath),
                     fit: BoxFit.cover,
@@ -79,13 +77,8 @@ class GalleryWidgetItemState extends State<GalleryWidgetItem> {
                       var thumbnail = snapshot.data;
                       widget.mediaFile.thumbnailPath = thumbnail;
                       return RotatedBox(
-                        quarterTurns: Platform.isIOS || widget.mediaFile.type == MediaType.video
-                            ? 0 // iOS thumbnails have correct orientation
-                            : MediaPickerBuilder.orientationToQuarterTurns(widget.mediaFile.orientation),
-                        child: Image.file(
-                          File(thumbnail),
-                          fit: BoxFit.cover,
-                        ),
+                        quarterTurns: widget.mediaFile.orientationToQuarterTurns,
+                        child: Image.file(File(thumbnail), fit: BoxFit.cover),
                       );
                     } else if (snapshot.hasError) {
                       return Icon(Icons.error, color: Colors.red, size: 24);

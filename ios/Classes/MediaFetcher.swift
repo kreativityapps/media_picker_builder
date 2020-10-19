@@ -9,6 +9,9 @@ import Foundation
 import Photos
 import UIKit
 
+typealias ProgressBlock = (Double) -> Void
+typealias MediaFileCompletionBlock = (MediaFile?) -> Void
+
 class MediaFetcher {
     static func getAsset(with fileId: String) -> PHAsset? {
         var asset: PHAsset?
@@ -59,26 +62,19 @@ class MediaFetcher {
         return assets
     }
     
-    static func getMediaAsset(for asset: PHAsset) -> MediaAsset? {
+    static func getMediaFile(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping MediaFileCompletionBlock) {
         switch asset.mediaType {
         case .video:
-            return getMediaAssetForVideo(asset: asset)
+            getVideoURL(for: asset, progressBlock: progressBlock, completion: completion)
         case .image:
-            return getMediaAssetForImage(asset: asset)
-        default:
-            return nil
-        }
-    }
-    
-    static func getMediaFile(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping (MediaFile?) -> Void) {
-        switch asset.mediaType {
-        case .video:
-            getVideoURL(for: asset, progressBlock: progressBlock) { (url) in
-                
-            }
-        case .image:
-            getImageUrl(for: asset, progressBlock: progressBlock) { (file) in
-                
+            if #available(iOS 9.1, *) {
+                if asset.mediaSubtypes.contains(.photoLive) {
+                    getLivePhotoUrl(for: asset, progressBlock: progressBlock, completion: completion)
+                } else {
+                    getImageUrl(for: asset, progressBlock: progressBlock, completion: completion)
+                }
+            } else {
+                getImageUrl(for: asset, progressBlock: progressBlock, completion: completion)
             }
             
         default:
@@ -108,10 +104,10 @@ class MediaFetcher {
             }
         }
     }
-    
-    typealias ProgressBlock = (Double) -> Void
-    
-    static func getVideoURL(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping (MediaFile?) -> Void) {
+}
+
+private extension MediaFetcher {
+    static func getVideoURL(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping MediaFileCompletionBlock) {
         let requestOptions = PHVideoRequestOptions()
         requestOptions.isNetworkAccessAllowed = true
         requestOptions.progressHandler = { progress, error, stop, info in
@@ -127,34 +123,13 @@ class MediaFetcher {
                 return
             }
             
-            let duration: Double
-            if asset.duration != 0 {
-                duration = asset.duration * 1000
-            } else {
-                duration = 0
-            }
-            
-            var dateAdded: Int?
-            if let creationDate = asset.creationDate {
-                dateAdded = Int(creationDate.timeIntervalSince1970)
-            }
-            
-            let result = MediaFile(
-                id: asset.localIdentifier,
-                dateAdded: dateAdded,
-                path: urlAsset.url.path,
-                thumbnailPath: nil,
-                orientation: getOrientation(asset: asset),
-                duration: duration,
-                mimeType: nil,
-                type: .VIDEO
-            )
+            let result = try? MediaFile(asset: asset, path: urlAsset.url.path, thumbnailPath: nil)
             
             completion(result)
         }
     }
     
-    static func getImageUrl(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping (MediaFile?) -> Void) {
+    static func getImageUrl(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping MediaFileCompletionBlock) {
         let options = PHContentEditingInputRequestOptions()
         options.isNetworkAccessAllowed = true
         options.progressHandler = { progress, error in
@@ -180,26 +155,60 @@ class MediaFetcher {
                 return
             }
             
-            var dateAdded: Int?
-            if let creationDate = asset.creationDate {
-                dateAdded = Int(creationDate.timeIntervalSince1970)
-            }
-            
-            result = MediaFile(
-                id: asset.localIdentifier,
-                dateAdded: dateAdded,
-                path: url.path,
-                thumbnailPath: nil,
-                orientation: getOrientation(asset: asset),
-                duration: nil,
-                mimeType: nil,
-                type: .IMAGE
-            )
+            result = try? MediaFile(asset: asset, path: url.path, thumbnailPath: nil)
         }
     }
-}
-
-private extension MediaFetcher {
+    
+    @available(iOS 9.1, *)
+    static func getLivePhotoUrl(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping MediaFileCompletionBlock) {
+        let options = PHLivePhotoRequestOptions()
+        options.isNetworkAccessAllowed = true
+        
+        options.progressHandler = { progress, error, stop, info in
+            if let block = progressBlock {
+                block(progress)
+            }
+        }
+        
+        let manager = PHCachingImageManager.default()
+        manager.requestLivePhoto(for: asset, targetSize: CGSize.zero, contentMode: .default, options: options) { (photo, info) in
+            guard let photo = photo else {
+                completion(nil)
+                return
+            }
+            
+            let resources = PHAssetResource.assetResources(for: photo)
+            
+            guard let videoResource = resources.first(where: ({ $0.type == PHAssetResourceType.pairedVideo })) else {
+                completion(nil)
+                return
+            }
+            
+            var photoUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+            photoUrl.appendPathComponent(UUID().uuidString)
+            
+            let options = PHAssetResourceRequestOptions()
+            options.isNetworkAccessAllowed = true
+            options.progressHandler = { progress in
+                if let block = progressBlock {
+                    block(progress)
+                }
+            }
+            
+            let resourceManager = PHAssetResourceManager.default()
+            resourceManager.writeData(for: videoResource, toFile: photoUrl, options: options) { (error) in
+                guard error == nil else {
+                    completion(nil)
+                    return
+                }
+                
+                let file = try? MediaFile(asset: asset, path: photoUrl.path, thumbnailPath: nil)
+                
+                completion(file)
+            }
+        }
+    }
+    
     static func getOrientation(asset: PHAsset) -> Int {
         let width = asset.pixelWidth
         let height = asset.pixelHeight
@@ -209,71 +218,5 @@ private extension MediaFetcher {
         }
         
         return 0
-    }
-    
-    static func getVideoOrientation(avAsset: AVAsset) -> Int {
-        if let t = avAsset.tracks(withMediaType: AVMediaType.video).first?.preferredTransform {
-            // Portrait
-            if(t.a == 0 && t.b == 1.0 && t.c == -1.0 && t.d == 0) {
-                return 90
-            }
-            // PortraitUpsideDown
-            if(t.a == 0 && t.b == -1.0 && t.c == 1.0 && t.d == 0)  {
-                return 270
-            }
-            // LandscapeRight
-            if(t.a == 1.0 && t.b == 0 && t.c == 0 && t.d == 1.0) {
-                return 0
-            }
-            // LandscapeLeft
-            if(t.a == -1.0 && t.b == 0 && t.c == 0 && t.d == -1.0) {
-                return 180
-            }
-        }
-        
-        return 0
-    }
-    
-    static func getMediaAssetForVideo(asset: PHAsset) -> MediaAsset {
-        let assetId = asset.localIdentifier
-        
-        var dateAdded: Int?
-        if let since1970 = asset.creationDate?.timeIntervalSince1970 {
-            dateAdded = Int(since1970)
-        }
-        
-        let duration: Double
-        if asset.duration != 0 {
-            duration = asset.duration * 1000
-        } else {
-            duration = 0
-        }
-        
-        let mediaAsset = MediaAsset(
-            id: assetId,
-            dateAdded: dateAdded ?? 0,
-            orientation: getOrientation(asset: asset),
-            duration: duration,
-            type: .VIDEO)
-        
-        return mediaAsset
-    }
-    
-    static func getMediaAssetForImage(asset: PHAsset) -> MediaAsset {
-        let assetId = asset.localIdentifier
-        
-        var dateAdded: Int?
-        if let creationDate = asset.creationDate {
-            dateAdded = Int(creationDate.timeIntervalSince1970)
-        }
-        
-        let mediaAsset = MediaAsset(
-            id: assetId,
-            dateAdded: dateAdded ?? 0,
-            orientation: getOrientation(asset: asset),
-            duration: nil,
-            type: .IMAGE)
-        
-        return mediaAsset
     }
 }

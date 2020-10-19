@@ -133,7 +133,7 @@ class FileFetcher {
                 orientation: orientation,
                 duration: nil,
                 mimeType: nil,
-                type: .IMAGE)
+                type: .image)
 
         } else if (asset.mediaType == .video) {
 
@@ -179,7 +179,7 @@ class FileFetcher {
                 orientation: orientation,
                 duration: duration,
                 mimeType: nil,
-                type: .VIDEO)
+                type: .video)
 
         }
         return mediaFile
@@ -289,6 +289,7 @@ class FileFetcher {
         return avAsset
     }
     
+    @available(iOS 9.1, *)
     static func getVideosAndLivePhotos(_ selectedDate: Date, duration: Int) -> [MediaFile] {
         var files = [MediaFile]()
         let phAssets = PHAsset.fetchVideosFor(date: selectedDate, duration: duration)
@@ -309,7 +310,6 @@ class FileFetcher {
         var mediaFile: MediaFile? = nil
         var url: String? = nil
         var duration: Double? = nil
-        var orientation: Int = 0
         
         let modificationDate = Int((asset.value(forKey: "modificationDate") as! Date).timeIntervalSince1970)
         var cachePath: URL? = getCachePath(for: asset.localIdentifier, modificationDate: modificationDate)
@@ -319,17 +319,8 @@ class FileFetcher {
             }
         }
         
-        if asset.playbackStyle == .livePhoto {
-            mediaFile = MediaFile.init(
-                id: asset.localIdentifier,
-                dateAdded: asset.getCreationDateSince1970(),
-                path: nil,
-                thumbnailPath: cachePath?.path,
-                orientation: orientation,
-                duration: nil,
-                mimeType: nil,
-                type: .IMAGE)
-        } else if asset.playbackStyle == .video {
+        switch asset.mediaType {
+        case .video:
             if loadPath {
                 let semaphore = DispatchSemaphore(value: 0)
                 let options = PHVideoRequestOptions()
@@ -356,7 +347,7 @@ class FileFetcher {
                 }
             }
             
-            mediaFile = MediaFile.init(
+            mediaFile = MediaFile(
                 id: asset.localIdentifier,
                 dateAdded: asset.getCreationDateSince1970(),
                 path: url,
@@ -364,11 +355,30 @@ class FileFetcher {
                 orientation: 0,
                 duration: duration,
                 mimeType: nil,
-                type: .VIDEO)
+                type: .video)
+            
+        case .image:
+            if #available(iOS 9.1, *) {
+                if asset.mediaSubtypes.contains(.photoLive) {
+                    mediaFile = MediaFile(
+                        id: asset.localIdentifier,
+                        dateAdded: asset.getCreationDateSince1970(),
+                        path: nil,
+                        thumbnailPath: cachePath?.path,
+                        orientation: 0,
+                        duration: nil,
+                        mimeType: nil,
+                        type: .image)
+                }
+            }
+        default:
+            break;
         }
+        
         return mediaFile
     }
     
+    @available(iOS 9.1, *)
     static func getLivePhotoPath(for fileId: String) -> String? {
         guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [fileId], options: .none).firstObject else {
             return nil
@@ -378,14 +388,18 @@ class FileFetcher {
         if let resource = livePhotoResources.first(where: ({ $0.type == PHAssetResourceType.pairedVideo })) {
             let semaphore = DispatchSemaphore(value: 0)
             var filePath: String? = nil
-            let photoDir = AssetFilesHelper.generateFolderForLivePhotoResources()!
-            AssetFilesHelper.saveAssetResource(resource: resource, inDirectory: photoDir, buffer: nil, error: nil, creationDate: asset.creationDate) { url in
-                filePath = url?.path
-                semaphore.signal()
+            
+            if let photoDir = AssetFilesHelper.generateFolderForLivePhotoResources() {
+                AssetFilesHelper.saveAssetResource(resource: resource, inDirectory: photoDir, buffer: nil, error: nil, creationDate: asset.creationDate) { url in
+                    filePath = url?.path
+                    semaphore.signal()
+                }
+                semaphore.wait()
+                
+                return filePath
             }
-            semaphore.wait()
-            return filePath
         }
+        
         return nil
     }
     

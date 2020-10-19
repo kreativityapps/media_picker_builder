@@ -92,12 +92,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<bool> _checkPermission() async {
-    final permissionStorageGroup =
-        Platform.isIOS ? PermissionGroup.photos : PermissionGroup.storage;
-    Map<PermissionGroup, PermissionStatus> res =
-        await PermissionHandler().requestPermissions([
-      permissionStorageGroup,
-    ]);
-    return res[permissionStorageGroup] == PermissionStatus.granted;
+    final permission = Platform.isIOS ? Permission.photos : Permission.storage;
+
+    var status = await permission.status;
+
+    if (status.isUndetermined) {
+      status = await permission.request();
+    }
+
+    return status == PermissionStatus.granted;
   }
 }
