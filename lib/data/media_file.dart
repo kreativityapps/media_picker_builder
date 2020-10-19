@@ -30,19 +30,25 @@ class MediaFile {
   int orientation;
 
   /// Video duration in milliseconds
-  int duration;
+  double duration;
 
   /// Supported on Android only
   String mimeType;
   MediaType type;
 
-  MediaFile(
-      {this.id,
-      this.dateAdded,
-      this.path,
-      this.thumbnailPath,
-      this.orientation,
-      this.type});
+  OrientationType get orientationType {
+    if (orientation == 0 || orientation == 180) {
+      return OrientationType.landscape;
+    }
+
+    return OrientationType.portrait;
+  }
+
+  int get durationInSeconds {
+    return duration ~/ 1000;
+  }
+
+  MediaFile({this.id, this.dateAdded, this.path, this.thumbnailPath, this.orientation, this.type});
 
   MediaFile.fromJson(Map<String, dynamic> json)
       : id = json['id'],
@@ -50,17 +56,16 @@ class MediaFile {
         path = json['path'],
         thumbnailPath = json['thumbnailPath'],
         orientation = json['orientation'],
-        duration = json['duration'],
+        duration = (json['duration'] as num)?.toDouble(),
         mimeType = json['mimeType'],
         type = MediaType.values[json['type']];
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MediaFile && runtimeType == other.runtimeType && id == other.id;
+  bool operator ==(Object other) => identical(this, other) || other is MediaFile && runtimeType == other.runtimeType && id == other.id;
 
   @override
   int get hashCode => id.hashCode;
 }
 
 enum MediaType { IMAGE, VIDEO }
+enum OrientationType { portrait, landscape }
