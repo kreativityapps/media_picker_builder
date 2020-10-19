@@ -75,6 +75,46 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
                     result(FlutterError(code: "NOT_FOUND", message: "Unable to get the file", details: nil))
                 }
             }
+        case "getVideosAndLivePhotos":
+            var dateInMs = Date()
+            if let milliseconds = (call.arguments as? Dictionary<String, Any>)?["dateInMs"] as? Int64 {
+                dateInMs = Date(timeIntervalSince1970: TimeInterval(milliseconds / 1000))
+            }
+            
+            var durationInSeconds = 1
+            if let seconds = (call.arguments as? Dictionary<String, Any>)?["durationInSeconds"] as? Int {
+                durationInSeconds = seconds
+            }
+            
+            DispatchQueue(label: "getVideosAndLivePhotos").async {
+                let mediaFiles = FileFetcher.getVideosAndLivePhotos(dateInMs, duration: durationInSeconds)
+                let encodedData = try? JSONEncoder().encode(mediaFiles)
+                let json = String(data: encodedData!, encoding: .utf8)!
+                result(json)
+            }
+            break
+        case "getLivePhotoPath":
+            guard let fileId = (call.arguments as? Dictionary<String, Any>)?["fileId"] as? String else {
+                result(FlutterError(code: "INVALID_ARGUMENTS", message: "fileId must not be null", details: nil))
+                return
+            }
+            DispatchQueue(label: "getLivePhotoPath").async {
+                guard let fullPath = FileFetcher.getLivePhotoPath(for: fileId) else {
+                    return result(FlutterError(code: "NOT_FOUND", message: "Unable to get file path", details: nil))
+                }
+                return result(fullPath)
+            }
+        case "getVideoPath":
+            guard let fileId = (call.arguments as? Dictionary<String, Any>)?["fileId"] as? String else {
+                result(FlutterError(code: "INVALID_ARGUMENTS", message: "fileId must not be null", details: nil))
+                return
+            }
+            DispatchQueue(label: "getVideoPath").async {
+                guard let fullPath = FileFetcher.getVideoPath(for: fileId) else {
+                    return result(FlutterError(code: "NOT_FOUND", message: "Unable to get video path", details: nil))
+                }
+                return result(fullPath)
+            }
         default:
             result(FlutterError.init(
                 code: "NOT_IMPLEMENTED",

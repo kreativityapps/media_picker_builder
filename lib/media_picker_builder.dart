@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:meta/meta.dart';
-
 import 'package:media_picker_builder/data/album.dart';
 import 'package:media_picker_builder/data/media_file.dart';
+import 'package:meta/meta.dart';
+
+import 'data/media_file.dart';
 
 class MediaPickerBuilder {
   static const MethodChannel _channel =
@@ -81,6 +82,34 @@ class MediaPickerBuilder {
     );
     final encoded = jsonDecode(json);
     return MediaFile.fromJson(encoded);
+  }
+
+  /// Gets list of videos and live photos with corresponding thumbnails
+  static Future<List<MediaFile>> getVideosAndLivePhotos({
+    int dateInMs,
+    int durationInSeconds,
+  }) async {
+    final String json = await _channel.invokeMethod(
+      "getVideosAndLivePhotos",
+      {
+        "dateInMs": dateInMs,
+        "durationInSeconds": durationInSeconds,
+      },
+    );
+    final decoded = jsonDecode(json) as List;
+    return decoded
+        .map((i) => MediaFile.fromJson(i as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Get path of a live photo (iOS only)
+  static Future<String> getLivePhotoPath(String fileId) async {
+    return await _channel.invokeMethod('getLivePhotoPath', {'fileId': fileId});
+  }
+
+  /// Get path of a video
+  static Future<String> getVideoPath(String fileId) async {
+    return await _channel.invokeMethod('getVideoPath', {'fileId': fileId});
   }
 
   /// A convenient function that converts image orientation to quarter turns for widget [RotatedBox]
