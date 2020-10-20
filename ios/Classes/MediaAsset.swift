@@ -12,8 +12,9 @@ struct MediaAsset: Codable {
     let id: String
     let dateAdded: Int // seconds since 1970
     let orientation: Int
-    let duration: Double
+    let duration: Double // duration in seconds
     let type: MediaType
+    let isLivePhoto: Bool
     
     init(asset: PHAsset) throws {
         let dateAdded: Int
@@ -31,15 +32,18 @@ struct MediaAsset: Codable {
         switch asset.mediaType {
         case .video:
             self.type = .video
+            self.isLivePhoto = false
         case .image:
+            self.type = .image
+            
             if #available(iOS 9.1, *) {
                 if asset.mediaSubtypes.contains(.photoLive) {
-                    self.type = .livePhoto
+                    self.isLivePhoto = true
                 } else {
-                    self.type = .image
+                    self.isLivePhoto = false
                 }
             } else {
-                self.type = .image
+                self.isLivePhoto = false
             }
         default:
             throw NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Unsupported media type"])

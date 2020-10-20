@@ -24,7 +24,7 @@ class MediaFetcher {
         return asset
     }
     
-    static func getAssetsWithDateRange(start: Date?, end: Date?, types: [PHAssetMediaType], includeLivePhotos: Bool) -> [PHAsset] {
+    static func getAssetsWithDateRange(start: Date?, end: Date?, types: [PHAssetMediaType]) -> [PHAsset] {
         let fetchOptions = PHFetchOptions()
         
         var predicates: [NSPredicate] = []
@@ -68,15 +68,7 @@ class MediaFetcher {
         var assets: [PHAsset] = []
         
         results.enumerateObjects { (asset, index, stop) in
-            if #available(iOS 9.1, *) {
-                if !includeLivePhotos && (asset.mediaType == .image && asset.mediaSubtypes.contains(.photoLive)) {
-                    
-                } else {
-                    assets.append(asset)
-                }
-            } else {
-                assets.append(asset)
-            }
+            assets.append(asset)
         }
         
         return assets

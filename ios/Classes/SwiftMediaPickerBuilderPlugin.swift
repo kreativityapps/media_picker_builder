@@ -32,8 +32,6 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
             
             var types: Set<PHAssetMediaType> = Set()
             
-            var includeLivePhotos = false
-            
             typeValues.forEach { (value) in
                 guard let type = MediaType(rawValue: value) else {
                     return
@@ -44,12 +42,10 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
                     types.insert(PHAssetMediaType.video)
                 case .image:
                     types.insert(PHAssetMediaType.image)
-                case .livePhoto:
-                    includeLivePhotos = true
                 }
             }
             
-            let assets = MediaFetcher.getAssetsWithDateRange(start: startDate, end: endDate, types: Array(types), includeLivePhotos: includeLivePhotos)
+            let assets = MediaFetcher.getAssetsWithDateRange(start: startDate, end: endDate, types: Array(types))
             
             let mediaFiles = assets.compactMap { (asset) -> MediaAsset? in
                 return try? MediaAsset(asset: asset)

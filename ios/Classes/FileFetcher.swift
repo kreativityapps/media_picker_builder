@@ -125,15 +125,23 @@ class FileFetcher {
             if since1970 != nil {
                 dateAdded = Int(since1970!)
             }
-            mediaFile = MediaFile.init(
+            
+            var isLivePhoto = false
+            if #available(iOS 9.1, *) {
+                isLivePhoto = asset.mediaSubtypes.contains(.photoLive)
+            }
+            
+            mediaFile = MediaFile(
                 id: asset.localIdentifier,
                 dateAdded: dateAdded,
                 path: url,
                 thumbnailPath: cachePath?.path,
                 orientation: orientation,
-                duration: nil,
+                duration: 0.0,
                 mimeType: nil,
-                type: .image)
+                type: .image,
+                isLivePhoto: isLivePhoto
+            )
 
         } else if (asset.mediaType == .video) {
 
@@ -171,15 +179,16 @@ class FileFetcher {
             if since1970 != nil {
                 dateAdded = Int(since1970!)
             }
-            mediaFile = MediaFile.init(
+            mediaFile = MediaFile(
                 id: asset.localIdentifier,
                 dateAdded: dateAdded,
                 path: url,
                 thumbnailPath: cachePath?.path,
                 orientation: orientation,
-                duration: duration,
+                duration: duration ?? 0.0,
                 mimeType: nil,
-                type: .video)
+                type: .video,
+                isLivePhoto: false)
 
         }
         return mediaFile
@@ -353,9 +362,11 @@ class FileFetcher {
                 path: url,
                 thumbnailPath: cachePath?.path,
                 orientation: 0,
-                duration: duration,
+                duration: duration ?? 0.0,
                 mimeType: nil,
-                type: .video)
+                type: .video,
+                isLivePhoto: false
+            )
             
         case .image:
             if #available(iOS 9.1, *) {
@@ -366,9 +377,11 @@ class FileFetcher {
                         path: nil,
                         thumbnailPath: cachePath?.path,
                         orientation: 0,
-                        duration: nil,
+                        duration: asset.duration,
                         mimeType: nil,
-                        type: .image)
+                        type: .image,
+                        isLivePhoto: true
+                    )
                 }
             }
         default:

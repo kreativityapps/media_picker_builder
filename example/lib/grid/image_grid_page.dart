@@ -44,10 +44,12 @@ class _ImageGridPageState extends State<ImageGridPage> {
     final files = await MediaPickerBuilder.getMediaAssets(
       start: start,
       end: end,
-      types: [MediaType.video, MediaType.livePhoto],
+      types: [MediaType.video, MediaType.image],
     );
 
-    final items = files.map((e) => MediaItem(e)).toList();
+    // Show only videos and Live Photos
+    // Live photos require the MediaType.image so we need to filter the non live photos out
+    final items = files.where((e) => e.type == MediaType.video || e.isLivePhoto).map((e) => MediaItem(e)).toList();
 
     setState(() {
       _items = items;
@@ -70,64 +72,92 @@ class _ImageGridPageState extends State<ImageGridPage> {
             return Center(child: CircularProgressIndicator());
           }
 
-          return CustomScrollView(
-            slivers: [
-              SliverGrid(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final item = _items[index];
-                    return ValueListenableBuilder<String>(
-                      valueListenable: item,
-                      builder: (context, value, child) {
-                        if (value == null) {
-                          item.getThumbnail();
+          return SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(18.0),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final item = _items[index];
+                        return ValueListenableBuilder<String>(
+                          valueListenable: item,
+                          builder: (context, value, child) {
+                            if (value == null) {
+                              item.getThumbnail();
 
-                          return Container(
-                            color: Colors.black,
-                            height: _imageSize.height,
-                            width: _imageSize.width,
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
+                              return Container(
+                                color: Colors.black,
+                                height: _imageSize.height,
+                                width: _imageSize.width,
+                                child: Center(child: CircularProgressIndicator()),
+                              );
+                            }
 
-                        final mediaFile = item.asset;
+                            final mediaFile = item.asset;
 
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            FadeInImage(
-                              placeholder: MemoryImage(kTransparentImage),
-                              image: FileImage(File(value)),
-                              fit: BoxFit.cover,
-                              width: _imageSize.width,
-                              height: _imageSize.height,
-                            ),
-                            if (mediaFile.type == MediaType.video) ...[
-                              Align(
-                                child: Text('${mediaFile.durationInSeconds}', style: captionStyle),
-                                alignment: Alignment.bottomRight,
-                              ),
-                              if (mediaFile.orientationType == OrientationType.landscape)
+                            IconData icon;
+
+                            switch (mediaFile.type) {
+                              case MediaType.image:
+                                if (mediaFile.isLivePhoto) {
+                                  icon = Icons.motion_photos_on;
+                                } else {
+                                  icon = Icons.photo;
+                                }
+                                break;
+                              case MediaType.video:
+                                icon = Icons.videocam;
+                                break;
+                            }
+
+                            return Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                FadeInImage(
+                                  placeholder: MemoryImage(kTransparentImage),
+                                  image: FileImage(File(value)),
+                                  fit: BoxFit.cover,
+                                  width: _imageSize.width,
+                                  height: _imageSize.height,
+                                ),
                                 Align(
-                                  child: Text('Landscape', style: captionStyle),
-                                  alignment: Alignment.bottomLeft,
-                                )
-                              else
-                                Align(
-                                  child: Text('Portrait', style: captionStyle),
-                                  alignment: Alignment.bottomLeft,
-                                )
-                            ]
-                          ],
+                                  alignment: Alignment.topLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Icon(icon, color: Colors.white),
+                                  ),
+                                ),
+                                if (mediaFile.type == MediaType.video)
+                                  Align(
+                                    alignment: Alignment.bottomCenter,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          if (mediaFile.orientationType == OrientationType.landscape)
+                                            Text('Landscape', style: captionStyle)
+                                          else
+                                            Text('Portrait', style: captionStyle),
+                                          Text('${mediaFile.duration.round()}', style: captionStyle),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                  childCount: _items.length,
+                      childCount: _items.length,
+                    ),
+                    gridDelegate: _gridDelegate,
+                  ),
                 ),
-                gridDelegate: _gridDelegate,
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

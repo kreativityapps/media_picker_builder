@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:media_picker_builder/data/media_asset.dart';
 import 'package:meta/meta.dart';
 
-enum MediaType { image, video, livePhoto }
+enum MediaType { image, video }
 enum OrientationType { portrait, landscape }
 
 class MediaFile extends MediaAsset {
@@ -56,10 +56,11 @@ class MediaFile extends MediaAsset {
     @required double duration,
     @required int orientation,
     @required MediaType type,
+    @required bool isLivePhoto,
     @required this.path,
     @required this.thumbnailPath,
     @required this.mimeType,
-  }) : super(dateAdded: dateAdded, duration: duration, id: id, orientation: orientation, type: type);
+  }) : super(dateAdded: dateAdded, duration: duration, id: id, orientation: orientation, type: type, isLivePhoto: isLivePhoto);
 
   factory MediaFile.fromJson(Map<String, dynamic> json) => MediaFile(
         id: json['id'],
@@ -70,6 +71,7 @@ class MediaFile extends MediaAsset {
         duration: (json['duration'] as num)?.toDouble(),
         mimeType: json['mimeType'],
         type: MediaType.values[json['type']],
+        isLivePhoto: json['isLivePhoto'],
       );
 
   @override

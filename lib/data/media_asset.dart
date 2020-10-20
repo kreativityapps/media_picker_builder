@@ -16,10 +16,12 @@ class MediaAsset {
   /// Exception iOS photos orientation value indicate a shift from vertical axis
   int orientation;
 
-  /// Video duration in milliseconds
+  /// Video duration in seconds
   double duration;
 
   MediaType type;
+
+  bool isLivePhoto;
 
   MediaAsset({
     @required this.id,
@@ -27,6 +29,7 @@ class MediaAsset {
     @required this.orientation,
     @required this.duration,
     @required this.type,
+    @required this.isLivePhoto,
   });
 
   OrientationType get orientationType {
@@ -37,8 +40,6 @@ class MediaAsset {
     return OrientationType.portrait;
   }
 
-  int get durationInSeconds => duration ~/ 1000;
-
   factory MediaAsset.fromJson(Map<String, dynamic> json) {
     if (json == null) return null;
 
@@ -48,6 +49,7 @@ class MediaAsset {
       orientation: json['orientation'],
       duration: (json['duration'] as num)?.toDouble(),
       type: MediaType.values[json['type']],
+      isLivePhoto: json['isLivePhoto'],
     );
   }
 
