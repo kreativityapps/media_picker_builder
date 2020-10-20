@@ -1,16 +1,59 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:media_picker_builder/data/album.dart';
+import 'package:media_picker_builder/data/media_asset.dart';
 import 'package:media_picker_builder/data/media_file.dart';
 import 'package:meta/meta.dart';
 
 import 'data/media_file.dart';
 
 class MediaPickerBuilder {
-  static const MethodChannel _channel =
-      const MethodChannel('media_picker_builder');
+  static const MethodChannel _channel = const MethodChannel('media_picker_builder');
+  static EventChannel _progressChannel = EventChannel('com.mediapickerbuilder.getMediaFile.progress', JSONMethodCodec());
+
+  static Future<List<MediaAsset>> getMediaAssets({
+    @required DateTime start,
+    @required DateTime end,
+    List<MediaType> types = MediaType.values,
+  }) async {
+    assert(start != null);
+    assert(end != null);
+
+    final String json = await _channel.invokeMethod(
+      "v2/getMediaAssets",
+      {
+        "startDate": start.millisecondsSinceEpoch / 1000,
+        "endDate": end.millisecondsSinceEpoch / 1000,
+        "types": types.map((e) => e.index).toList(),
+      },
+    );
+
+    return await compute(_jsonToMediaAssets, json);
+  }
+
+  static Future<MediaFile> retrieveMediaFile({@required MediaAsset asset, ValueChanged<double> progress}) async {
+    assert(asset != null);
+
+    final stream = _progressChannel.receiveBroadcastStream().map((event) {
+      final Map<String, dynamic> map = Map.castFrom(event);
+      return GetMediaFileEvent.fromJson(map);
+    }).where((event) => event.fileId == asset.id);
+
+    final subscription = stream.listen((event) {
+      if (progress != null) {
+        progress(event.progress);
+      }
+    });
+
+    final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": asset.id});
+
+    subscription.cancel();
+
+    return await compute(_jsonToMediaFile, json);
+  }
 
   /// Gets list of albums and its content based on the required flags.
   /// This method will also return the thumbnails IF it was already generated.
@@ -31,8 +74,8 @@ class MediaPickerBuilder {
         "loadIOSPaths": loadIOSPaths,
       },
     );
-    final encoded = jsonDecode(json);
-    return encoded.map<Album>((album) => Album.fromJson(album)).toList();
+
+    return await compute(_jsonToAlbums, json);
   }
 
   /// Returns the thumbnail path of the media file returned in method [getAlbums].
@@ -97,9 +140,7 @@ class MediaPickerBuilder {
       },
     );
     final decoded = jsonDecode(json) as List;
-    return decoded
-        .map((i) => MediaFile.fromJson(i as Map<String, dynamic>))
-        .toList();
+    return decoded.map((i) => MediaFile.fromJson(i as Map<String, dynamic>)).toList();
   }
 
   /// Get path of a live photo (iOS only)
@@ -111,24 +152,46 @@ class MediaPickerBuilder {
   static Future<String> getVideoPath(String fileId) async {
     return await _channel.invokeMethod('getVideoPath', {'fileId': fileId});
   }
+}
 
-  /// A convenient function that converts image orientation to quarter turns for widget [RotatedBox]
-  /// i.e. RotatedBox(
-  ///                  quarterTurns: orientationToQuarterTurns(mediaFile.orientation),
-  ///                  child: Image.file(
-  ///                    File(mediaFile.thumbnailPath),
-  ///                    fit: BoxFit.cover,
-  ///                    )
-  static int orientationToQuarterTurns(int orientationInDegrees) {
-    switch (orientationInDegrees) {
-      case 90:
-        return 1;
-      case 180:
-        return 2;
-      case 270:
-        return 3;
-      default:
-        return 0;
-    }
-  }
+MediaFile _jsonToMediaFile(dynamic json) {
+  final decoded = jsonDecode(json) as Map;
+  final Map<String, dynamic> map = Map.castFrom(decoded);
+
+  return MediaFile.fromJson(map);
+}
+
+List<MediaAsset> _jsonToMediaAssets(dynamic json) {
+  final decoded = jsonDecode(json) as List;
+  final List<Map<String, dynamic>> list = List.castFrom(decoded);
+
+  return list.map<MediaAsset>((e) => MediaAsset.fromJson(e)).toList();
+}
+
+List<Album> _jsonToAlbums(dynamic json) {
+  final decoded = jsonDecode(json) as List;
+  final List<Map<String, dynamic>> list = List.castFrom(decoded);
+
+  return list.map<Album>((album) => Album.fromJson(album)).toList();
+}
+
+class GetMediaFileEvent {
+  final String type;
+  final String fileId;
+  final double progress;
+  final MediaFile file;
+
+  GetMediaFileEvent({
+    @required this.type,
+    @required this.fileId,
+    @required this.progress,
+    @required this.file,
+  });
+
+  factory GetMediaFileEvent.fromJson(Map<String, dynamic> json) => GetMediaFileEvent(
+        type: json["type"],
+        fileId: json["fileId"],
+        progress: (json["progress"] as num)?.toDouble(),
+        file: json["file"] != null ? MediaFile.fromJson(json["file"]) : null,
+      );
 }

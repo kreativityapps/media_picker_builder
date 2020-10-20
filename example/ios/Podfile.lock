@@ -2,17 +2,17 @@ PODS:
   - Flutter (1.0.0)
   - media_picker_builder (0.0.1):
     - Flutter
-  - permission_handler (3.1.0):
+  - "permission_handler (5.0.1+1)":
     - Flutter
 
 DEPENDENCIES:
-  - Flutter (from `.symlinks/flutter/ios`)
+  - Flutter (from `Flutter`)
   - media_picker_builder (from `.symlinks/plugins/media_picker_builder/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
-    :path: ".symlinks/flutter/ios"
+    :path: Flutter
   media_picker_builder:
     :path: ".symlinks/plugins/media_picker_builder/ios"
   permission_handler:
@@ -20,9 +20,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  media_picker_builder: 1fe169c06399c4a521ff05ac4082c453693cc96a
-  permission_handler: fa6b0d784b1a43cb96b468a5b8365cb130b1956a
+  media_picker_builder: 89eaf7402aa86f7b64d389411d20ce864d99bfe7
+  permission_handler: eac8e15b4a1a3fba55b761d19f3f4e6b005d15b6
 
-PODFILE CHECKSUM: ebd43b443038e611b86ede96e613bd6033c49497
+PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
 
 COCOAPODS: 1.9.3

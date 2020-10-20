@@ -17,6 +17,6 @@ A plugin that returns multimedia picker data such as folders and its content pat
   s.dependency 'Flutter'
 	s.swift_version = '5.0'
 
-  s.ios.deployment_target = '12.0'
+  s.ios.deployment_target = '9.0'
 end
 
