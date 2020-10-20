@@ -3,9 +3,21 @@ import UIKit
 import Photos
 
 public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
+    private var progressChannel: FlutterEventChannel?
+    private var eventSink: FlutterEventSink?
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "media_picker_builder", binaryMessenger: registrar.messenger())
+        
         let instance = SwiftMediaPickerBuilderPlugin()
+        
+        let _progressChannel = FlutterEventChannel(name: "com.mediapickerbuilder.getMediaFile.progress",
+                                                   binaryMessenger: registrar.messenger(),
+                                                   codec: FlutterJSONMethodCodec.sharedInstance())
+        _progressChannel.setStreamHandler(instance)
+        
+        instance.progressChannel = _progressChannel
+        
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
@@ -72,7 +84,8 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
             }
             
             MediaFetcher.getMediaFile(for: asset) { (progress) in
-                
+                print("Swift Progress: \(progress)")
+                try? self.sendEvent(event: GetMediaFileEvent(type: .progress, fileId: fileId, progress: progress, file: nil))
             } completion: { (file) in
                 let encoder = JSONEncoder()
                 do {
@@ -208,5 +221,42 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
                 details: nil))
         }
         
+    }
+}
+
+struct GetMediaFileEvent: Encodable {
+    let type: EventType
+    let fileId: String
+    let progress: Double?
+    let file: MediaFile?
+    
+    enum EventType: String, Encodable {
+        case progress
+        case finished
+    }
+}
+
+extension SwiftMediaPickerBuilderPlugin: FlutterStreamHandler {
+    public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        eventSink = events
+        
+        return nil
+    }
+    
+    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        eventSink = nil
+        
+        return nil
+    }
+    
+    func sendEvent(event: GetMediaFileEvent) throws {
+        let encoder = JSONEncoder()
+        
+        let data = try encoder.encode(event)
+        let json = try JSONSerialization.jsonObject(with: data, options: [])
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.eventSink?(json)
+        }
     }
 }

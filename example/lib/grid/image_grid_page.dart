@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:media_picker_builder/data/media_asset.dart';
 import 'package:media_picker_builder/data/media_file.dart';
 import 'package:media_picker_builder/media_picker_builder.dart';
 import 'package:media_picker_builder_example/grid/image_item.dart';
@@ -81,6 +82,7 @@ class _ImageGridPageState extends State<ImageGridPage> {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final item = _items[index];
+
                         return ValueListenableBuilder<String>(
                           valueListenable: item,
                           builder: (context, value, child) {
@@ -88,20 +90,20 @@ class _ImageGridPageState extends State<ImageGridPage> {
                               item.getThumbnail();
 
                               return Container(
-                                color: Colors.black,
+                                color: Colors.white,
                                 height: _imageSize.height,
                                 width: _imageSize.width,
                                 child: Center(child: CircularProgressIndicator()),
                               );
                             }
 
-                            final mediaFile = item.asset;
+                            final asset = item.asset;
 
                             IconData icon;
 
-                            switch (mediaFile.type) {
+                            switch (asset.type) {
                               case MediaType.image:
-                                if (mediaFile.isLivePhoto) {
+                                if (asset.isLivePhoto) {
                                   icon = Icons.motion_photos_on;
                                 } else {
                                   icon = Icons.photo;
@@ -112,41 +114,46 @@ class _ImageGridPageState extends State<ImageGridPage> {
                                 break;
                             }
 
-                            return Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                FadeInImage(
-                                  placeholder: MemoryImage(kTransparentImage),
-                                  image: FileImage(File(value)),
-                                  fit: BoxFit.cover,
-                                  width: _imageSize.width,
-                                  height: _imageSize.height,
-                                ),
-                                Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Icon(icon, color: Colors.white),
+                            return GestureDetector(
+                              onTap: () {
+                                getFile(asset);
+                              },
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  FadeInImage(
+                                    placeholder: MemoryImage(kTransparentImage),
+                                    image: FileImage(File(value)),
+                                    fit: BoxFit.cover,
+                                    width: _imageSize.width,
+                                    height: _imageSize.height,
                                   ),
-                                ),
-                                if (mediaFile.type == MediaType.video)
                                   Align(
-                                    alignment: Alignment.bottomCenter,
+                                    alignment: Alignment.topLeft,
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          if (mediaFile.orientationType == OrientationType.landscape)
-                                            Text('Landscape', style: captionStyle)
-                                          else
-                                            Text('Portrait', style: captionStyle),
-                                          Text('${mediaFile.duration.round()}', style: captionStyle),
-                                        ],
-                                      ),
+                                      child: Icon(icon, color: Colors.white),
                                     ),
                                   ),
-                              ],
+                                  if (asset.type == MediaType.video)
+                                    Align(
+                                      alignment: Alignment.bottomCenter,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            if (asset.orientationType == OrientationType.landscape)
+                                              Text('Landscape', style: captionStyle)
+                                            else
+                                              Text('Portrait', style: captionStyle),
+                                            Text('${asset.duration.round()}', style: captionStyle),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             );
                           },
                         );
@@ -162,5 +169,16 @@ class _ImageGridPageState extends State<ImageGridPage> {
         },
       ),
     );
+  }
+
+  void getFile(MediaAsset asset) async {
+    final file = await MediaPickerBuilder.retrieveMediaFile(
+      asset: asset,
+      progress: (value) {
+        print('Progress: $value');
+      },
+    );
+
+    print('File: ${file.path}');
   }
 }

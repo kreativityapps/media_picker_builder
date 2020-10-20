@@ -86,7 +86,11 @@ class _MyAppState extends State<MyApp> {
     final range = await showDateRangePicker(
       context: navigatorKey.currentState.overlay.context,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2030),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(
+        start: DateTime.now().subtract(Duration(days: 7)),
+        end: DateTime.now(),
+      ),
     );
 
     final route = MaterialPageRoute(

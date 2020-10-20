@@ -12,6 +12,7 @@ import 'data/media_file.dart';
 
 class MediaPickerBuilder {
   static const MethodChannel _channel = const MethodChannel('media_picker_builder');
+  static EventChannel _progressChannel = EventChannel('com.mediapickerbuilder.getMediaFile.progress', JSONMethodCodec());
 
   static Future<List<MediaAsset>> getMediaAssets({
     @required DateTime start,
@@ -33,10 +34,23 @@ class MediaPickerBuilder {
     return await compute(_jsonToMediaAssets, json);
   }
 
-  static Future<MediaFile> retrieveMediaFile(MediaFile file) async {
-    assert(file != null);
+  static Future<MediaFile> retrieveMediaFile({@required MediaAsset asset, ValueChanged<double> progress}) async {
+    assert(asset != null);
 
-    final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": file.id});
+    final stream = _progressChannel.receiveBroadcastStream().map((event) {
+      final Map<String, dynamic> map = Map.castFrom(event);
+      return GetMediaFileEvent.fromJson(map);
+    }).where((event) => event.fileId == asset.id);
+
+    final subscription = stream.listen((event) {
+      if (progress != null) {
+        progress(event.progress);
+      }
+    });
+
+    final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": asset.id});
+
+    subscription.cancel();
 
     return await compute(_jsonToMediaFile, json);
   }
@@ -159,4 +173,25 @@ List<Album> _jsonToAlbums(dynamic json) {
   final List<Map<String, dynamic>> list = List.castFrom(decoded);
 
   return list.map<Album>((album) => Album.fromJson(album)).toList();
+}
+
+class GetMediaFileEvent {
+  final String type;
+  final String fileId;
+  final double progress;
+  final MediaFile file;
+
+  GetMediaFileEvent({
+    @required this.type,
+    @required this.fileId,
+    @required this.progress,
+    @required this.file,
+  });
+
+  factory GetMediaFileEvent.fromJson(Map<String, dynamic> json) => GetMediaFileEvent(
+        type: json["type"],
+        fileId: json["fileId"],
+        progress: (json["progress"] as num)?.toDouble(),
+        file: json["file"] != null ? MediaFile.fromJson(json["file"]) : null,
+      );
 }
