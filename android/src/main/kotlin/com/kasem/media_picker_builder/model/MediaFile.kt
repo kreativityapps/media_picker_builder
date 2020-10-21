@@ -52,4 +52,14 @@ class MediaFile(
     enum class MediaType {
         IMAGE, VIDEO
     }
+    
+    fun toMediaAsset() =
+            MediaAsset(
+                    id = id,
+                    dateAdded = dateAdded,
+                    orientation = orientation,
+                    duration = duration,
+                    isLivePhoto = false,
+                    type = type
+            )
 }

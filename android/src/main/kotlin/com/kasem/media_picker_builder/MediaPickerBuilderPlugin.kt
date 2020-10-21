@@ -3,6 +3,7 @@ package com.kasem.media_picker_builder
 import android.content.Context
 import android.os.Handler
 import android.util.Log
+import com.kasem.media_picker_builder.model.MediaAsset
 import com.kasem.media_picker_builder.model.MediaFile
 import com.kasem.media_picker_builder.providers.FileFetcher
 import com.kasem.media_picker_builder.providers.ThumbnailImageProvider
@@ -11,7 +12,9 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
+import org.json.JSONArray
 import java.lang.Exception
+import java.util.Date
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -36,7 +39,7 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                     result.error("INVALID_ARGUMENTS", "withImages or withVideos must not be null", null)
                     return
                 }
-                val albums = FileFetcher.getAlbums(context, withImages, withVideos)
+                val albums = FileFetcher.getAlbumsJson(context, withImages, withVideos)
                 result.success(albums.toString())
             }
             "getThumbnail" -> {
@@ -102,6 +105,42 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                         }
                     }
                 }
+            }
+            "v2/getMediaAssets" -> {
+                val startDateSeconds = call.argument<Double>("startDate")
+                val endDateSeconds = call.argument<Double>("endDate")
+                val types = call.argument<List<Long>>("types")
+
+                if (startDateSeconds == null || endDateSeconds == null || types == null) {
+                    result.error("INVALID_ARGUMENTS", "startDate or endDate or types must not be null", null)
+                    return
+                }
+
+                val mediaAssets = mutableListOf<MediaAsset>()
+
+                val albums =
+                        FileFetcher.getAlbums(context, true, true)
+                albums.keys.forEach { key ->
+                    val album = albums[key]!!
+                    val filteredMediaAssets = album.files
+                            .filter { it.dateAdded in startDateSeconds..endDateSeconds }
+                            .map {
+                                it.toMediaAsset()
+                            }
+                    mediaAssets.addAll(filteredMediaAssets)
+                }
+
+                result.success(JSONArray(mediaAssets.map { it.toJSONObject() }).toString())
+            }
+            "v2/getMediaFile" -> {
+                val fileId = call.argument<String>("fileId")
+
+                if (fileId == null) {
+                    result.error("INVALID_ARGUMENTS", "fileId must not be null", null)
+                    return
+                }
+
+                result.success("")
             }
             else -> result.notImplemented()
         }
