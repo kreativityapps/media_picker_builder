@@ -8,12 +8,6 @@ import org.json.JSONArray
 
 object FileFetcher {
 
-    fun getAlbumsJson(context: Context, withImages: Boolean, withVideos: Boolean): JSONArray {
-        val albumHashMap: Map<Long, Album> = getAlbums(context, withImages, withVideos)
-
-        return JSONArray(albumHashMap.values.map { it.toJSONObject() })
-    }
-
     fun getAlbums(context: Context, withImages: Boolean, withVideos: Boolean): MutableMap<Long, Album> {
         val albumHashMap: MutableMap<Long, Album> = LinkedHashMap()
 
