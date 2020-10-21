@@ -39,8 +39,8 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                     result.error("INVALID_ARGUMENTS", "withImages or withVideos must not be null", null)
                     return
                 }
-                val albums = FileFetcher.getAlbumsJson(context, withImages, withVideos)
-                result.success(albums.toString())
+                val albums = FileFetcher.getAlbums(context, withImages, withVideos)
+                result.success(JSONArray(albums.values.map { it.toJSONObject() }).toString())
             }
             "getThumbnail" -> {
                 val fileId = call.argument<String>("fileId")
@@ -133,14 +133,42 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                 result.success(JSONArray(mediaAssets.map { it.toJSONObject() }).toString())
             }
             "v2/getMediaFile" -> {
-                val fileId = call.argument<String>("fileId")
+                val fileId = call.argument<String>("fileId")?.toLong()
 
                 if (fileId == null) {
                     result.error("INVALID_ARGUMENTS", "fileId must not be null", null)
                     return
                 }
 
-                result.success("")
+                executor.execute {
+                    try {
+                        var mediaFile = FileFetcher.getMediaFile(
+                                context,
+                                fileId,
+                                MediaFile.MediaType.VIDEO,
+                                false)
+
+                        if (mediaFile == null) {
+                            mediaFile = FileFetcher.getMediaFile(
+                                    context,
+                                    fileId,
+                                    MediaFile.MediaType.IMAGE,
+                                    false)
+                        }
+
+                        mainHandler.post {
+                            if (mediaFile != null)
+                                result.success(mediaFile.toJSONObject().toString())
+                            else
+                                result.error("NOT_FOUND", "Unable to find the file", null)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("MediaPickerBuilder", e.message.toString())
+                        mainHandler.post {
+                            result.error("GENERATE_THUMBNAIL_FAILED", "Unable to generate thumbnail ${e.message}", null)
+                        }
+                    }
+                }
             }
             else -> result.notImplemented()
         }
