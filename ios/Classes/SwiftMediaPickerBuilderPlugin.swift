@@ -84,8 +84,7 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
             }
             
             MediaFetcher.getMediaFile(for: asset) { (progress) in
-                print("Swift Progress: \(progress)")
-                try? self.sendEvent(event: GetMediaFileEvent(type: .progress, fileId: fileId, progress: progress, file: nil))
+                try? self.sendEvent(event: GetMediaFileEvent(fileId: fileId, progress: progress))
             } completion: { (file) in
                 let encoder = JSONEncoder()
                 do {
@@ -225,15 +224,8 @@ public class SwiftMediaPickerBuilderPlugin: NSObject, FlutterPlugin {
 }
 
 struct GetMediaFileEvent: Encodable {
-    let type: EventType
     let fileId: String
     let progress: Double?
-    let file: MediaFile?
-    
-    enum EventType: String, Encodable {
-        case progress
-        case finished
-    }
 }
 
 extension SwiftMediaPickerBuilderPlugin: FlutterStreamHandler {

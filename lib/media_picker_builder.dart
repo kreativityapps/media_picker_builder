@@ -22,11 +22,14 @@ class MediaPickerBuilder {
     assert(start != null);
     assert(end != null);
 
+    final startUtc = start.toUtc();
+    final endUtc = end.toUtc();
+
     final String json = await _channel.invokeMethod(
       "v2/getMediaAssets",
       {
-        "startDate": start.millisecondsSinceEpoch / 1000,
-        "endDate": end.millisecondsSinceEpoch / 1000,
+        "startDate": startUtc.millisecondsSinceEpoch / 1000,
+        "endDate": endUtc.millisecondsSinceEpoch / 1000,
         "types": types.map((e) => e.index).toList(),
       },
     );
@@ -176,22 +179,16 @@ List<Album> _jsonToAlbums(dynamic json) {
 }
 
 class GetMediaFileEvent {
-  final String type;
   final String fileId;
   final double progress;
-  final MediaFile file;
 
   GetMediaFileEvent({
-    @required this.type,
     @required this.fileId,
     @required this.progress,
-    @required this.file,
   });
 
   factory GetMediaFileEvent.fromJson(Map<String, dynamic> json) => GetMediaFileEvent(
-        type: json["type"],
         fileId: json["fileId"],
         progress: (json["progress"] as num)?.toDouble(),
-        file: json["file"] != null ? MediaFile.fromJson(json["file"]) : null,
       );
 }
