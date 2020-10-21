@@ -29,21 +29,12 @@ class MediaFetcher {
         
         var predicates: [NSPredicate] = []
         
-        let calendar = Calendar.current
-        
         if let startDate = start {
-            let date = calendar.startOfDay(for: startDate)
-            
-            predicates.append(NSPredicate(format: "creationDate > %@", date as CVarArg))
+            predicates.append(NSPredicate(format: "creationDate > %@", startDate as CVarArg))
         }
+        
         if let endDate = end {
-            var components = DateComponents()
-            components.day = 1
-            components.second = -1
-            
-            let date = calendar.date(byAdding: components, to: endDate)!
-            
-            predicates.append(NSPredicate(format: "creationDate < %@", date as CVarArg))
+            predicates.append(NSPredicate(format: "creationDate < %@", endDate as CVarArg))
         }
         
         var typePredicates: [NSPredicate] = []

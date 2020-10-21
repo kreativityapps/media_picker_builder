@@ -42,9 +42,12 @@ class _ImageGridPageState extends State<ImageGridPage> {
     final start = widget.range.start;
     final end = widget.range.end;
 
+    final startDate = DateTime(start.year, start.month, start.day);
+    final endDate = DateTime(end.year, end.month, end.day + 1, 0, 0, end.second - 1);
+
     final files = await MediaPickerBuilder.getMediaAssets(
-      start: start,
-      end: end,
+      start: startDate,
+      end: endDate,
       types: [MediaType.video, MediaType.image],
     );
 
