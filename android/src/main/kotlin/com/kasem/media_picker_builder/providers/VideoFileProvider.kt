@@ -37,11 +37,25 @@ object VideoFileProvider {
         return null
     }
 
-    fun fetchVideos(context: Context, albumHashMap: MutableMap<Long, Album>) {
+    fun fetchVideos(
+            context: Context, 
+            albumHashMap: MutableMap<Long, Album>,
+            startDate: Long? = null,
+            endDate: Long? = null
+    ) {
+        var selectionClause: String? = null
+        var selectionArgs: Array<String>? = null
+        
+        if (startDate != null && endDate != null) {
+            selectionClause = "${MediaStore.Video.Media.DATE_ADDED} BETWEEN ? AND ?"
+            selectionArgs = arrayOf(startDate.toString(), endDate.toString())
+        }
+        
         context.contentResolver.query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                VIDEO_MEDIA_COLUMNS, null,
-                null,
+                VIDEO_MEDIA_COLUMNS,
+                selectionClause,
+                selectionArgs,
                 "${MediaStore.Video.Media._ID} DESC")?.use { cursor ->
 
             while (cursor.moveToNext()) {

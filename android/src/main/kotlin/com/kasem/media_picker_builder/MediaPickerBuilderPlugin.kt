@@ -39,7 +39,8 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                     result.error("INVALID_ARGUMENTS", "withImages or withVideos must not be null", null)
                     return
                 }
-                val albums = FileFetcher.getAlbums(context, withImages, withVideos)
+                val albums =
+                        FileFetcher.getAlbums(context, withImages, withVideos)
                 result.success(JSONArray(albums.values.map { it.toJSONObject() }).toString())
             }
             "getThumbnail" -> {
@@ -107,8 +108,8 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                 }
             }
             "v2/getMediaAssets" -> {
-                val startDateSeconds = call.argument<Double>("startDate")
-                val endDateSeconds = call.argument<Double>("endDate")
+                val startDateSeconds = call.argument<Double>("startDate")?.toLong()
+                val endDateSeconds = call.argument<Double>("endDate")?.toLong()
                 val types = call.argument<List<Long>>("types")
 
                 if (startDateSeconds == null || endDateSeconds == null || types == null) {
@@ -116,14 +117,23 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                     return
                 }
 
+                val mediaTypes = types.mapIndexed { index, element ->
+                    MediaFile.MediaType.values()[index]
+                }
+
                 val mediaAssets = mutableListOf<MediaAsset>()
 
                 val albums =
-                        FileFetcher.getAlbums(context, true, true)
+                        FileFetcher.getAlbums(
+                                context,
+                                mediaTypes.contains(MediaFile.MediaType.IMAGE),
+                                mediaTypes.contains(MediaFile.MediaType.VIDEO),
+                                startDateSeconds,
+                                endDateSeconds)
+
                 albums.keys.forEach { key ->
                     val album = albums[key]!!
                     val filteredMediaAssets = album.files
-                            .filter { it.dateAdded in startDateSeconds..endDateSeconds }
                             .map {
                                 it.toMediaAsset()
                             }

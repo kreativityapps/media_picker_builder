@@ -3,20 +3,25 @@ package com.kasem.media_picker_builder.providers
 import android.content.Context
 import com.kasem.media_picker_builder.model.Album
 import com.kasem.media_picker_builder.model.MediaFile
-import org.json.JSONArray
 
 
 object FileFetcher {
 
-    fun getAlbums(context: Context, withImages: Boolean, withVideos: Boolean): MutableMap<Long, Album> {
+    fun getAlbums(
+            context: Context,
+            withImages: Boolean,
+            withVideos: Boolean,
+            startDate: Long? = null,
+            endDate: Long? = null
+    ): MutableMap<Long, Album> {
         val albumHashMap: MutableMap<Long, Album> = LinkedHashMap()
 
         if (withImages) {
-            ImageFileProvider.fetchImages(context, albumHashMap)
+            ImageFileProvider.fetchImages(context, albumHashMap, startDate, endDate)
         }
 
         if (withVideos) {
-            VideoFileProvider.fetchVideos(context, albumHashMap)
+            VideoFileProvider.fetchVideos(context, albumHashMap, startDate, endDate)
         }
 
         ThumbnailImageProvider.fetchThumbnails(context, albumHashMap, withImages, withVideos)

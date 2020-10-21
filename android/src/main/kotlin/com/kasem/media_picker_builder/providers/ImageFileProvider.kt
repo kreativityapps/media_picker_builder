@@ -36,11 +36,25 @@ object ImageFileProvider {
         return null
     }
 
-    fun fetchImages(context: Context, albumHashMap: MutableMap<Long, Album>) {
+    fun fetchImages(
+            context: Context, 
+            albumHashMap: MutableMap<Long, Album>, 
+            startDate: Long?, 
+            endDate: Long?
+    ) {
+        var selectionClause: String? = null
+        var selectionArgs: Array<String>? = null
+
+        if (startDate != null && endDate != null) {
+            selectionClause = "${MediaStore.Images.Media.DATE_ADDED} BETWEEN ? AND ?"
+            selectionArgs = arrayOf(startDate.toString(), endDate.toString())
+        }
+        
         context.contentResolver.query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                IMAGE_MEDIA_COLUMNS, null,
-                null,
+                IMAGE_MEDIA_COLUMNS,
+                selectionClause,
+                selectionArgs,
                 "${MediaStore.Images.Media._ID} DESC")?.use { cursor ->
 
             while (cursor.moveToNext()) {
