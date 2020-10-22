@@ -1,4 +1,4 @@
-package com.kasem.media_picker_builder
+package com.kasem.media_picker_builder.model
 
 import org.json.JSONObject
 
@@ -49,10 +49,17 @@ class MediaFile(
         return id.hashCode()
     }
 
-
     enum class MediaType {
         IMAGE, VIDEO
     }
-
-
+    
+    fun toMediaAsset() =
+            MediaAsset(
+                    id = id,
+                    dateAdded = dateAdded,
+                    orientation = orientation,
+                    duration = duration,
+                    isLivePhoto = false,
+                    type = type
+            )
 }

@@ -1,4 +1,4 @@
-package com.kasem.media_picker_builder
+package com.kasem.media_picker_builder.model
 
 import org.json.JSONArray
 import org.json.JSONObject
