@@ -113,6 +113,7 @@ private extension MediaFetcher {
     static func getVideoURL(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping MediaFileCompletionBlock) {
         let requestOptions = PHVideoRequestOptions()
         requestOptions.isNetworkAccessAllowed = true
+        requestOptions.deliveryMode = .highQualityFormat
         requestOptions.progressHandler = { progress, error, stop, info in
             if let block = progressBlock {
                 block(progress)
@@ -121,14 +122,28 @@ private extension MediaFetcher {
         
         let manager = PHCachingImageManager.default()
         manager.requestAVAsset(forVideo: asset, options: requestOptions) { (avAsset, mix, info) in
-            guard let urlAsset = avAsset as? AVURLAsset else {
+            guard let avAsset = avAsset else {
                 completion(nil)
                 return
             }
             
-            let result = try? MediaFile(asset: asset, path: urlAsset.url.path, thumbnailPath: nil)
-            
-            completion(result)
+            if let comp = avAsset as? AVComposition {
+                convertAVCompositionToAVAsset(asset: comp) { (urlAsset) in
+                    if let urlAsset = urlAsset {
+                        let result = try? MediaFile(asset: asset, path: urlAsset.url.path, thumbnailPath: nil)
+                        
+                        completion(result)
+                    } else {
+                        completion(nil)
+                    }
+                }
+            } else if let urlAsset = avAsset as? AVURLAsset {
+                let result = try? MediaFile(asset: asset, path: urlAsset.url.path, thumbnailPath: nil)
+                
+                completion(result)
+            } else {
+                completion(nil)
+            }
         }
     }
     
@@ -221,5 +236,31 @@ private extension MediaFetcher {
         }
         
         return 0
+    }
+    
+    static func convertAVCompositionToAVAsset(asset: AVComposition, completion: @escaping (AVURLAsset?) -> Void) {
+        guard let exporter = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
+            completion(nil)
+            return
+        }
+        
+        let randNum = Int(arc4random())
+        
+        // Generating Export Path
+        let exportPath = NSTemporaryDirectory().appendingFormat("\(randNum)"+"video.mov")
+        let exportUrl = URL(fileURLWithPath: exportPath)
+        
+        // Setting Up Export Path as URL
+        exporter.outputURL = exportUrl
+        exporter.outputFileType = AVFileType.mov
+        
+        exporter.exportAsynchronously {
+            if exporter.status == .completed, let url = exporter.outputURL {
+                let asset = AVURLAsset(url: url)
+                completion(asset)
+            } else {
+                completion(nil)
+            }
+        }
     }
 }
