@@ -82,8 +82,8 @@ object VideoFileProvider {
         val albumName = cursor.getString(3)     //MediaStore.Video.Media.BUCKET_DISPLAY_NAME
         val albumId = cursor.getLong(4)         //MediaStore.Video.Media.BUCKET_ID
         val mimeType = cursor.getString(5)      //MediaStore.Video.Media.MIME_TYPE
-        val duration = cursor.getLong(6)        //MediaStore.Video.Media.DURATION
-        val orientation = cursor.getInt(7)        //MediaStore.Video.Media.ORIENTATION
+        val duration = cursor.getLong(6) / 1000 //MediaStore.Video.Media.DURATION
+        val orientation = cursor.getInt(7)      //MediaStore.Video.Media.ORIENTATION
 
         return MediaFile(
                 fileId,

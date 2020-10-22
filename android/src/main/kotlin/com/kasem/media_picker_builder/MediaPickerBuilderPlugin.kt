@@ -112,8 +112,8 @@ class MediaPickerBuilderPlugin(private val context: Context) : MethodCallHandler
                 val endDateSeconds = call.argument<Double>("endDate")?.toLong()
                 val types = call.argument<List<Long>>("types")
 
-                if (startDateSeconds == null || endDateSeconds == null || types == null) {
-                    result.error("INVALID_ARGUMENTS", "startDate or endDate or types must not be null", null)
+                if (types == null) {
+                    result.error("INVALID_ARGUMENTS", "types must not be null", null)
                     return
                 }
 

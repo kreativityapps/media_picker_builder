@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -40,20 +41,25 @@ class MediaPickerBuilder {
   static Future<MediaFile> retrieveMediaFile({@required MediaAsset asset, ValueChanged<double> progress}) async {
     assert(asset != null);
 
-    final stream = _progressChannel.receiveBroadcastStream().map((event) {
-      final Map<String, dynamic> map = Map.castFrom(event);
-      return GetMediaFileEvent.fromJson(map);
-    }).where((event) => event.fileId == asset.id);
+    StreamSubscription<GetMediaFileEvent> subscription;
 
-    final subscription = stream.listen((event) {
-      if (progress != null) {
-        progress(event.progress);
-      }
-    });
+    // Only implemented on iOS for the time being
+    if (Platform.isIOS) {
+      final stream = _progressChannel.receiveBroadcastStream().map((event) {
+        final Map<String, dynamic> map = Map.castFrom(event);
+        return GetMediaFileEvent.fromJson(map);
+      }).where((event) => event.fileId == asset.id);
+
+      subscription = stream.listen((event) {
+        if (progress != null) {
+          progress(event.progress);
+        }
+      });
+    }
 
     final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": asset.id});
 
-    subscription.cancel();
+    subscription?.cancel();
 
     return await compute(_jsonToMediaFile, json);
   }

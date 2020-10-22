@@ -17,7 +17,7 @@ class MediaFile(
         var mimeType: String?,
 
         /**
-         * Video duration in milliseconds
+         * Video duration in seconds
          */
         var duration: Long?,
         var type: MediaType) {
