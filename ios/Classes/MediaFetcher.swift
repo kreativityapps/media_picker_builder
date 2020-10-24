@@ -8,6 +8,7 @@
 import Foundation
 import Photos
 import UIKit
+import MobileCoreServices
 
 typealias ProgressBlock = (Double) -> Void
 typealias MediaFileCompletionBlock = (MediaFile?) -> Void
@@ -180,6 +181,7 @@ private extension MediaFetcher {
     @available(iOS 9.1, *)
     static func getLivePhotoUrl(for asset: PHAsset, progressBlock: ProgressBlock?, completion: @escaping MediaFileCompletionBlock) {
         let options = PHLivePhotoRequestOptions()
+        options.deliveryMode = .highQualityFormat
         options.isNetworkAccessAllowed = true
         
         options.progressHandler = { progress, error, stop, info in
@@ -197,13 +199,24 @@ private extension MediaFetcher {
             
             let resources = PHAssetResource.assetResources(for: photo)
             
-            guard let videoResource = resources.first(where: ({ $0.type == PHAssetResourceType.pairedVideo })) else {
+            guard let resource = resources.first(where: ({ $0.type == PHAssetResourceType.pairedVideo })) else {
+                completion(nil)
+                return
+            }
+            
+            let maybeExt = UTTypeCopyPreferredTagWithClass(
+                resource.uniformTypeIdentifier as CFString,
+                kUTTagClassFilenameExtension
+            )?.takeRetainedValue()
+            
+            guard let ext = maybeExt else {
                 completion(nil)
                 return
             }
             
             var photoUrl = URL(fileURLWithPath: NSTemporaryDirectory())
             photoUrl.appendPathComponent(UUID().uuidString)
+            photoUrl.appendPathExtension(ext as String)
             
             let options = PHAssetResourceRequestOptions()
             options.isNetworkAccessAllowed = true
@@ -214,7 +227,7 @@ private extension MediaFetcher {
             }
             
             let resourceManager = PHAssetResourceManager.default()
-            resourceManager.writeData(for: videoResource, toFile: photoUrl, options: options) { (error) in
+            resourceManager.writeData(for: resource, toFile: photoUrl, options: options) { (error) in
                 guard error == nil else {
                     completion(nil)
                     return
@@ -244,11 +257,10 @@ private extension MediaFetcher {
             return
         }
         
-        let randNum = Int(arc4random())
-        
         // Generating Export Path
-        let exportPath = NSTemporaryDirectory().appendingFormat("\(randNum)"+"video.mov")
-        let exportUrl = URL(fileURLWithPath: exportPath)
+        var exportUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+        exportUrl.appendPathComponent(UUID().uuidString)
+        exportUrl.appendPathExtension(".mov")
         
         // Setting Up Export Path as URL
         exporter.outputURL = exportUrl
