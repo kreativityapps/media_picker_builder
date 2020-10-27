@@ -62,21 +62,57 @@ class MediaFile extends MediaAsset {
     @required this.mimeType,
   }) : super(dateAdded: dateAdded, duration: duration, id: id, orientation: orientation, type: type, isLivePhoto: isLivePhoto);
 
-  factory MediaFile.fromJson(Map<String, dynamic> json) => MediaFile(
-        id: json['id'],
-        dateAdded: json['dateAdded'],
-        path: json['path'],
-        thumbnailPath: json['thumbnailPath'],
-        orientation: json['orientation'],
-        duration: (json['duration'] as num)?.toDouble(),
-        mimeType: json['mimeType'],
-        type: MediaType.values[json['type']],
-        isLivePhoto: json['isLivePhoto'],
-      );
+  factory MediaFile.fromJson(Map<String, dynamic> json) {
+    if (json == null) return null;
+
+    final livePhoto = json['isLivePhoto'] as bool ?? false;
+
+    var duration = (json['duration'] as num)?.toDouble();
+    if (livePhoto) {
+      duration = 3.0;
+    }
+
+    final file = MediaFile(
+      id: json['id'],
+      dateAdded: json['dateAdded'],
+      path: json['path'],
+      thumbnailPath: json['thumbnailPath'],
+      orientation: json['orientation'],
+      duration: duration,
+      mimeType: json['mimeType'],
+      type: MediaType.values[json['type']],
+      isLivePhoto: livePhoto,
+    );
+
+    return file;
+  }
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is MediaFile && runtimeType == other.runtimeType && id == other.id;
+  bool operator ==(Object o) {
+    if (identical(this, o)) return true;
+
+    return o is MediaFile &&
+        o.id == id &&
+        o.dateAdded == dateAdded &&
+        o.orientation == orientation &&
+        o.duration == duration &&
+        o.type == type &&
+        o.isLivePhoto == isLivePhoto &&
+        o.path == path &&
+        o.thumbnailPath == thumbnailPath &&
+        o.mimeType == mimeType;
+  }
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode {
+    return id.hashCode ^
+        dateAdded.hashCode ^
+        orientation.hashCode ^
+        duration.hashCode ^
+        type.hashCode ^
+        isLivePhoto.hashCode ^
+        path.hashCode ^
+        thumbnailPath.hashCode ^
+        mimeType.hashCode;
+  }
 }

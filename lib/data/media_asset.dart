@@ -43,13 +43,20 @@ class MediaAsset {
   factory MediaAsset.fromJson(Map<String, dynamic> json) {
     if (json == null) return null;
 
+    final livePhoto = json['isLivePhoto'] as bool ?? false;
+
+    var duration = (json['duration'] as num)?.toDouble();
+    if (livePhoto) {
+      duration = 3.0;
+    }
+
     return MediaAsset(
       id: json['id'],
       dateAdded: json['dateAdded'],
       orientation: json['orientation'],
-      duration: (json['duration'] as num)?.toDouble(),
+      duration: duration,
       type: MediaType.values[json['type']],
-      isLivePhoto: json['isLivePhoto'],
+      isLivePhoto: livePhoto,
     );
   }
 
@@ -62,11 +69,12 @@ class MediaAsset {
         o.dateAdded == dateAdded &&
         o.orientation == orientation &&
         o.duration == duration &&
-        o.type == type;
+        o.type == type &&
+        o.isLivePhoto == isLivePhoto;
   }
 
   @override
   int get hashCode {
-    return id.hashCode ^ dateAdded.hashCode ^ orientation.hashCode ^ duration.hashCode ^ type.hashCode;
+    return id.hashCode ^ dateAdded.hashCode ^ orientation.hashCode ^ duration.hashCode ^ type.hashCode ^ isLivePhoto.hashCode;
   }
 }
