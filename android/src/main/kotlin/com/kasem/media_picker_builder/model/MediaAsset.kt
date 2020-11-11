@@ -6,7 +6,7 @@ data class MediaAsset(
         val id: Long,
         val dateAdded: Long,
         val orientation: Int,
-        val duration: Long?,
+        val duration: Double?,
         val type: MediaFile.MediaType,
         val isLivePhoto: Boolean
 ) {

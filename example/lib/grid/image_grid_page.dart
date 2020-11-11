@@ -150,7 +150,7 @@ class _ImageGridPageState extends State<ImageGridPage> {
                                               Text('Landscape', style: captionStyle)
                                             else
                                               Text('Portrait', style: captionStyle),
-                                            Text('${asset.duration.round()}', style: captionStyle),
+                                            Text('${asset.duration.round()}s', style: captionStyle),
                                           ],
                                         ),
                                       ),

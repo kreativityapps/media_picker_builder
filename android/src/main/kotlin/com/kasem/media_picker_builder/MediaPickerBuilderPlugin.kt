@@ -1,8 +1,10 @@
 package com.kasem.media_picker_builder
 
 import android.content.Context
+import android.media.ThumbnailUtils
 import android.os.Handler
 import android.util.Log
+import android.util.Size
 import com.kasem.media_picker_builder.model.MediaAsset
 import com.kasem.media_picker_builder.model.MediaFile
 import com.kasem.media_picker_builder.providers.FileFetcher
@@ -13,6 +15,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import org.json.JSONArray
+import java.io.File
 import java.lang.Exception
 import java.util.Date
 import java.util.concurrent.ExecutorService

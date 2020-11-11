@@ -19,7 +19,7 @@ class MediaFile(
         /**
          * Video duration in seconds
          */
-        var duration: Long?,
+        var duration: Double?,
         var type: MediaType) {
 
     fun toJSONObject(): JSONObject {
