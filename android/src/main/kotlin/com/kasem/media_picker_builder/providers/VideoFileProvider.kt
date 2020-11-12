@@ -20,19 +20,18 @@ object VideoFileProvider {
             context: Context,
             fileId: Long
     ): MediaFile? {
-        context.contentResolver.query(
+        val cursor = context.contentResolver.query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 VIDEO_MEDIA_COLUMNS,
                 "${MediaStore.Video.Media._ID} = $fileId",
                 null,
-                null)?.use { cursor ->
+                null)
 
-            val mediaMetadataRetriever = MediaMetadataRetriever()
-            if (cursor.moveToFirst()) {
-                return cursorToMediaFile(mediaMetadataRetriever, cursor)
-            }
-            mediaMetadataRetriever.release()
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        if (cursor != null && cursor.moveToFirst()) {
+            return cursorToMediaFile(mediaMetadataRetriever, cursor)
         }
+        mediaMetadataRetriever.release()
 
         return null
     }
@@ -51,34 +50,33 @@ object VideoFileProvider {
             selectionArgs = arrayOf(startDate.toString(), endDate.toString())
         }
 
-        context.contentResolver.query(
+        val cursor = context.contentResolver.query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 VIDEO_MEDIA_COLUMNS,
                 selectionClause,
                 selectionArgs,
                 "${MediaStore.Video.Media._ID} DESC")
-                ?.use { cursor ->
 
-                    val mediaMetadataRetriever = MediaMetadataRetriever()
-                    while (cursor.moveToNext()) {
-                        val mediaFile = cursorToMediaFile(mediaMetadataRetriever, cursor)
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        while (cursor?.moveToNext() == true) {
+            val mediaFile = cursorToMediaFile(mediaMetadataRetriever, cursor)
 
-                        if (mediaFile != null) {
-                            val album = albumHashMap[mediaFile.albumId]
-                            if (album == null) {
-                                albumHashMap[mediaFile.albumId] = Album(
-                                        mediaFile.albumId,
-                                        mediaFile.albumName,
-                                        mutableListOf(mediaFile)
-                                )
-                            } else {
-                                album.files.add(mediaFile)
-                            }
-                        }
-                    }
-                    mediaMetadataRetriever.release()
+            if (mediaFile != null) {
+                val album = albumHashMap[mediaFile.albumId]
+                if (album == null) {
+                    albumHashMap[mediaFile.albumId] = Album(
+                            mediaFile.albumId,
+                            mediaFile.albumName,
+                            mutableListOf(mediaFile)
+                    )
+                } else {
+                    album.files.add(mediaFile)
                 }
+            }
+        }
+        mediaMetadataRetriever.release()
     }
+
 
     private fun cursorToMediaFile(
             mediaMetadataRetriever: MediaMetadataRetriever,
