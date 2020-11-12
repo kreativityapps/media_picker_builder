@@ -87,11 +87,11 @@ object VideoFileProvider {
         val filePath = cursor.getString(2)
         val mimeType = cursor.getString(3)
 
-        var duration: Float? = null
+        var duration: Double? = null
         var orientation: Int = -1
         try {
             mediaMetadataRetriever.setDataSource(filePath)
-            duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toFloat() / 1000
+            duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toDouble() / 1000
             orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION).toInt()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -106,7 +106,7 @@ object VideoFileProvider {
                 null,
                 orientation,
                 mimeType,
-                duration?.toDouble(),
+                duration,
                 MediaFile.MediaType.VIDEO
         )
     }
