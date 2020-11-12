@@ -20,6 +20,8 @@ class _ImageGridPageState extends State<ImageGridPage> {
   List<MediaItem> _items = [];
   Map<String, String> thumbnailsCache = {};
 
+  MediaFile selectedFile;
+
   static const _imageSize = Size(90, 122);
 
   final _gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
@@ -43,7 +45,8 @@ class _ImageGridPageState extends State<ImageGridPage> {
     final end = widget.range.end;
 
     final startDate = DateTime(start.year, start.month, start.day);
-    final endDate = DateTime(end.year, end.month, end.day + 1, 0, 0, end.second - 1);
+    final endDate =
+        DateTime(end.year, end.month, end.day + 1, 0, 0, end.second - 1);
 
     final files = await MediaPickerBuilder.getMediaAssets(
       start: startDate,
@@ -53,7 +56,10 @@ class _ImageGridPageState extends State<ImageGridPage> {
 
     // Show only videos and Live Photos
     // Live photos require the MediaType.image so we need to filter the non live photos out
-    final items = files.where((e) => e.type == MediaType.video || e.isLivePhoto).map((e) => MediaItem(e)).toList();
+    final items = files
+        .where((e) => e.type == MediaType.video || e.isLivePhoto)
+        .map((e) => MediaItem(e))
+        .toList();
 
     setState(() {
       _items = items;
@@ -79,6 +85,9 @@ class _ImageGridPageState extends State<ImageGridPage> {
           return SafeArea(
             child: CustomScrollView(
               slivers: [
+                SliverToBoxAdapter(
+                  child: Text(selectedFile != null ? "Selected:\n${selectedFile.path}" : ""),
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.all(18.0),
                   sliver: SliverGrid(
@@ -96,7 +105,8 @@ class _ImageGridPageState extends State<ImageGridPage> {
                                 color: Colors.white,
                                 height: _imageSize.height,
                                 width: _imageSize.width,
-                                child: Center(child: CircularProgressIndicator()),
+                                child:
+                                    Center(child: CircularProgressIndicator()),
                               );
                             }
 
@@ -144,13 +154,18 @@ class _ImageGridPageState extends State<ImageGridPage> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
-                                            if (asset.orientationType == OrientationType.landscape)
-                                              Text('Landscape', style: captionStyle)
+                                            if (asset.orientationType ==
+                                                OrientationType.landscape)
+                                              Text('Landscape',
+                                                  style: captionStyle)
                                             else
-                                              Text('Portrait', style: captionStyle),
-                                            Text('${asset.duration.round()}s', style: captionStyle),
+                                              Text('Portrait',
+                                                  style: captionStyle),
+                                            Text('${asset.duration.round()}s',
+                                                style: captionStyle),
                                           ],
                                         ),
                                       ),
@@ -182,6 +197,9 @@ class _ImageGridPageState extends State<ImageGridPage> {
       },
     );
 
+    setState(() {
+      selectedFile = file;
+    });
     print('File: ${file.path}');
   }
 }
