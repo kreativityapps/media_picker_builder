@@ -23,6 +23,7 @@ object VideoFileProvider {
                             MediaStore.Video.Media.DATA,
                             MediaStore.Video.Media.MIME_TYPE,
                             MediaStore.Video.Media.BUCKET_ID,
+                            MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
                             MediaStore.Video.Media.DURATION,
                             MediaStore.Video.Media.ORIENTATION),
                     "${MediaStore.Video.Media._ID} = $fileId",
@@ -83,6 +84,7 @@ object VideoFileProvider {
                             MediaStore.Video.Media.DATA,
                             MediaStore.Video.Media.MIME_TYPE,
                             MediaStore.Video.Media.BUCKET_ID,
+                            MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
                             MediaStore.Video.Media.DURATION,
                             MediaStore.Video.Media.ORIENTATION),
                     selectionClause,
@@ -145,13 +147,14 @@ object VideoFileProvider {
         val filePath = cursor.getString(2)
         val mimeType = cursor.getString(3)
         val albumId = cursor.getLong(4)
-        val duration = cursor.getDouble(5) / 1000
-        val orientation = cursor.getInt(6)
+        val albumName = cursor.getString(5)
+        val duration = cursor.getDouble(6) / 1000
+        val orientation = cursor.getInt(7)
 
         return MediaFile(
                 fileId,
                 albumId,
-                "", //Passing empty string, because real `albumName` was problematic under certain circumstances
+                albumName, //Passing empty string, because real `albumName` was problematic under certain circumstances
                 fileDateAdded,
                 filePath,
                 null,
