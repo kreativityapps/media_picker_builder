@@ -158,7 +158,7 @@ object VideoFileProvider {
         return MediaFile(
                 fileId,
                 albumId,
-                albumName, //Passing empty string, because real `albumName` was problematic under certain circumstances
+                albumName,
                 fileDateAdded,
                 filePath,
                 null,
