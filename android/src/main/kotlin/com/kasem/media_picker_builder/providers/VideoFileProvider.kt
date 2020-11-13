@@ -42,7 +42,9 @@ object VideoFileProvider {
                             MediaStore.Video.Media._ID,
                             MediaStore.Video.Media.DATE_ADDED,
                             MediaStore.Video.Media.DATA,
-                            MediaStore.Video.Media.MIME_TYPE),
+                            MediaStore.Video.Media.MIME_TYPE,
+                            MediaStore.Video.Media.ALBUM
+                    ),
                     "${MediaStore.Video.Media._ID} = $fileId",
                     null,
                     null)
@@ -114,7 +116,9 @@ object VideoFileProvider {
                             MediaStore.Video.Media._ID,
                             MediaStore.Video.Media.DATE_ADDED,
                             MediaStore.Video.Media.DATA,
-                            MediaStore.Video.Media.MIME_TYPE),
+                            MediaStore.Video.Media.MIME_TYPE,
+                            MediaStore.Video.Media.ALBUM
+                    ),
                     selectionClause,
                     selectionArgs,
                     "${MediaStore.Video.Media._ID} DESC")
@@ -173,6 +177,7 @@ object VideoFileProvider {
         val fileDateAdded = cursor.getLong(1)
         val filePath = cursor.getString(2)
         val mimeType = cursor.getString(3)
+        val albumName = cursor.getString(4)
 
         var duration: Double? = null
         var orientation: Int = -1
@@ -187,7 +192,7 @@ object VideoFileProvider {
         return MediaFile(
                 fileId,
                 0,
-                "", //Passing empty string, because real `albumName` was problematic under certain circumstances
+                albumName,
                 fileDateAdded,
                 filePath,
                 null,
