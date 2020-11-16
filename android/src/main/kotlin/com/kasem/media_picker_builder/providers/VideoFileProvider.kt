@@ -151,7 +151,7 @@ object VideoFileProvider {
         val filePath = cursor.getString(2)
         val mimeType = cursor.getString(3)
         val albumId = cursor.getLong(4)
-        val albumName = cursor.getString(5)
+        val albumName = cursor.getString(5) ?: ""
         val duration = cursor.getDouble(6) / 1000
         val orientation = cursor.getInt(7)
 
@@ -177,7 +177,7 @@ object VideoFileProvider {
         val fileDateAdded = cursor.getLong(1)
         val filePath = cursor.getString(2)
         val mimeType = cursor.getString(3)
-        val albumName = cursor.getString(4)
+        val albumName = cursor.getString(4) ?: ""
 
         var duration: Double? = null
         var orientation: Int = -1
