@@ -79,7 +79,7 @@ object ImageFileProvider {
         val fileId = cursor.getLong(0)          //MediaStore.Images.Media._ID
         val fileDateAdded = cursor.getLong(1)   //MediaStore.Images.Media.DATE_ADDED
         val filePath = cursor.getString(2)      //MediaStore.Images.Media.DATA
-        val albumName = cursor.getString(3)     //MediaStore.Images.Media.BUCKET_DISPLAY_NAME
+        val albumName = cursor.getString(3) ?: ""     //MediaStore.Images.Media.BUCKET_DISPLAY_NAME
         val albumId = cursor.getLong(4)         //MediaStore.Images.Media.BUCKET_ID
         val orientation = cursor.getInt(5)      //MediaStore.Images.Media.ORIENTATION
         val mimeType = cursor.getString(6)      //MediaStore.Images.Media.MIME_TYPE
@@ -87,7 +87,7 @@ object ImageFileProvider {
         return MediaFile(
                 id = fileId,
                 albumId = albumId,
-                albumName = "", //Passing empty string, because real `albumName` was problematic under certain circumstances
+                albumName = albumName, //Passing empty string, because real `albumName` was problematic under certain circumstances
                 dateAdded = fileDateAdded,
                 path = filePath,
                 thumbnailPath = null,
