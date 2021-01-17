@@ -24,7 +24,7 @@ object FileFetcher {
             VideoFileProvider.fetchVideos(context, albumHashMap, startDate, endDate)
         }
 
-        ThumbnailImageProvider.fetchThumbnails(context, albumHashMap, withImages, withVideos)
+        //ThumbnailImageProvider.fetchThumbnails(context, albumHashMap, withImages, withVideos)
 
         albumHashMap.values.forEach { album ->
             album.files.sortByDescending { file ->

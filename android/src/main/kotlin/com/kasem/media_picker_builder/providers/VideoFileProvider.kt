@@ -183,8 +183,8 @@ object VideoFileProvider {
         var orientation: Int = -1
         try {
             mediaMetadataRetriever.setDataSource(filePath)
-            duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toDouble() / 1000
-            orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION).toInt()
+            duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toDouble() ?: 0.0 / 1000
+            orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toInt() ?: 0
         } catch (e: Exception) {
             e.printStackTrace()
         }

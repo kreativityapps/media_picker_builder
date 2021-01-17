@@ -50,6 +50,7 @@ object ThumbnailImageProvider {
                                     }
                                 }
                         }
+                        cursor.close()
                     }
         }
 
@@ -94,10 +95,10 @@ object ThumbnailImageProvider {
             dir.mkdirs()
         }
         val outputFile = File(dir, "$fileId.jpg")
-        if (outputFile.exists()) {
-            return outputFile.path
+        return if (outputFile.exists()) {
+            outputFile.path
         } else {
-            return generateThumbnail(context, fileId, type, outputFile)
+            generateThumbnail(context, fileId, type, outputFile)
         }
     }
 
