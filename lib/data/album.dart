@@ -2,9 +2,9 @@ import 'package:media_picker_builder/data/media_file.dart';
 
 class Album {
   /// Unique identifier for the album
-  final String id;
-  final String name;
-  final List<MediaFile> files;
+  final String? id;
+  final String? name;
+  final List<MediaFile>? files;
 
   Album({this.id, this.name, this.files});
 

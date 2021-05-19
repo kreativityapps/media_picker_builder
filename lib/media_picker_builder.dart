@@ -16,8 +16,8 @@ class MediaPickerBuilder {
   static EventChannel _progressChannel = EventChannel('com.mediapickerbuilder.getMediaFile.progress', JSONMethodCodec());
 
   static Future<List<MediaAsset>> getMediaAssets({
-    @required DateTime start,
-    @required DateTime end,
+    required DateTime start,
+    required DateTime end,
     List<MediaType> types = MediaType.values,
   }) async {
     assert(start != null);
@@ -26,7 +26,7 @@ class MediaPickerBuilder {
     final startUtc = start.toUtc();
     final endUtc = end.toUtc();
 
-    final String json = await _channel.invokeMethod(
+    final String? json = await _channel.invokeMethod(
       "v2/getMediaAssets",
       {
         "startDate": startUtc.millisecondsSinceEpoch / 1000,
@@ -38,10 +38,10 @@ class MediaPickerBuilder {
     return await compute(_jsonToMediaAssets, json);
   }
 
-  static Future<MediaFile> retrieveMediaFile({@required MediaAsset asset, ValueChanged<double> progress}) async {
+  static Future<MediaFile> retrieveMediaFile({required MediaAsset asset, ValueChanged<double?>? progress}) async {
     assert(asset != null);
 
-    StreamSubscription<GetMediaFileEvent> subscription;
+    StreamSubscription<GetMediaFileEvent>? subscription;
 
     // Only implemented on iOS for the time being
     if (Platform.isIOS) {
@@ -57,7 +57,7 @@ class MediaPickerBuilder {
       });
     }
 
-    final String json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": asset.id});
+    final String? json = await _channel.invokeMethod("v2/getMediaFile", {"fileId": asset.id});
 
     subscription?.cancel();
 
@@ -71,11 +71,11 @@ class MediaPickerBuilder {
   /// [loadIOSPaths] For iOS only, to optimize the speed of querying the files you can set this to false,
   /// but if you do that you will have to get the path & video duration after selection is done
   static Future<List<Album>> getAlbums({
-    @required bool withImages,
-    @required bool withVideos,
+    required bool withImages,
+    required bool withVideos,
     bool loadIOSPaths = true,
   }) async {
-    final String json = await _channel.invokeMethod(
+    final String? json = await _channel.invokeMethod(
       "getAlbums",
       {
         "withImages": withImages,
@@ -99,11 +99,11 @@ class MediaPickerBuilder {
   ///                    File(mediaFile.thumbnailPath),
   ///                    fit: BoxFit.cover,
   ///                    )
-  static Future<String> getThumbnail({
-    @required String fileId,
-    @required MediaType type,
+  static Future<String?> getThumbnail({
+    required String fileId,
+    required MediaType type,
   }) async {
-    final String path = await _channel.invokeMethod(
+    final String? path = await _channel.invokeMethod(
       'getThumbnail',
       {
         "fileId": fileId,
@@ -118,12 +118,12 @@ class MediaPickerBuilder {
   /// Android always returns the path & duration
   /// [loadThumbnail] Whether or not to generate a thumbnail
   static Future<MediaFile> getMediaFile({
-    @required String fileId,
-    @required MediaType type,
+    required String fileId,
+    required MediaType type,
     bool loadIOSPath = true,
     bool loadThumbnail = false,
   }) async {
-    final String json = await _channel.invokeMethod(
+    final String json = await (_channel.invokeMethod(
       'getMediaFile',
       {
         "fileId": fileId,
@@ -131,34 +131,34 @@ class MediaPickerBuilder {
         "loadIOSPath": loadIOSPath,
         "loadThumbnail": loadThumbnail,
       },
-    );
+    ) as FutureOr<String>);
     final encoded = jsonDecode(json);
     return MediaFile.fromJson(encoded);
   }
 
   /// Gets list of videos and live photos with corresponding thumbnails
   static Future<List<MediaFile>> getVideosAndLivePhotos({
-    int dateInMs,
-    int durationInSeconds,
+    int? dateInMs,
+    int? durationInSeconds,
   }) async {
-    final String json = await _channel.invokeMethod(
+    final String json = await (_channel.invokeMethod(
       "getVideosAndLivePhotos",
       {
         "dateInMs": dateInMs,
         "durationInSeconds": durationInSeconds,
       },
-    );
+    ) as FutureOr<String>);
     final decoded = jsonDecode(json) as List;
     return decoded.map((i) => MediaFile.fromJson(i as Map<String, dynamic>)).toList();
   }
 
   /// Get path of a live photo (iOS only)
-  static Future<String> getLivePhotoPath(String fileId) async {
+  static Future<String?> getLivePhotoPath(String fileId) async {
     return await _channel.invokeMethod('getLivePhotoPath', {'fileId': fileId});
   }
 
   /// Get path of a video
-  static Future<String> getVideoPath(String fileId) async {
+  static Future<String?> getVideoPath(String fileId) async {
     return await _channel.invokeMethod('getVideoPath', {'fileId': fileId});
   }
 }
@@ -185,16 +185,16 @@ List<Album> _jsonToAlbums(dynamic json) {
 }
 
 class GetMediaFileEvent {
-  final String fileId;
-  final double progress;
+  final String? fileId;
+  final double? progress;
 
   GetMediaFileEvent({
-    @required this.fileId,
-    @required this.progress,
+    required this.fileId,
+    required this.progress,
   });
 
   factory GetMediaFileEvent.fromJson(Map<String, dynamic> json) => GetMediaFileEvent(
         fileId: json["fileId"],
-        progress: (json["progress"] as num)?.toDouble(),
+        progress: (json["progress"] as num?)?.toDouble(),
       );
 }

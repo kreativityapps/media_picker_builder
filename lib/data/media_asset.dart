@@ -3,10 +3,10 @@ import 'package:meta/meta.dart';
 
 class MediaAsset {
   /// Unique identifier for the file
-  String id;
+  String? id;
 
   /// Date added in seconds (unix timestamp)
-  int dateAdded;
+  int? dateAdded;
 
   /// Orientation in degrees
   /// 0 - landscape right
@@ -14,22 +14,22 @@ class MediaAsset {
   /// 180 - landscape left
   /// 270 - portrait upside down
   /// Exception iOS photos orientation value indicate a shift from vertical axis
-  int orientation;
+  int? orientation;
 
   /// Video duration in seconds
-  double duration;
+  double? duration;
 
   MediaType type;
 
-  bool isLivePhoto;
+  bool? isLivePhoto;
 
   MediaAsset({
-    @required this.id,
-    @required this.dateAdded,
-    @required this.orientation,
-    @required this.duration,
-    @required this.type,
-    @required this.isLivePhoto,
+    required this.id,
+    required this.dateAdded,
+    required this.orientation,
+    required this.duration,
+    required this.type,
+    required this.isLivePhoto,
   });
 
   OrientationType get orientationType {
@@ -47,7 +47,7 @@ class MediaAsset {
       id: json['id'],
       dateAdded: json['dateAdded'],
       orientation: json['orientation'],
-      duration: (json['duration'] as num)?.toDouble(),
+      duration: (json['duration'] as num?)?.toDouble(),
       type: MediaType.values[json['type']],
       isLivePhoto: json['isLivePhoto'],
     );

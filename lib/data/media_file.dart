@@ -8,7 +8,7 @@ enum OrientationType { portrait, landscape }
 
 class MediaFile extends MediaAsset {
   /// Original file path
-  String path;
+  String? path;
 
   /// Thumbnails from android (NOT iOS) need to have their orientation fixed
   /// based on the returned [orientation]
@@ -21,10 +21,10 @@ class MediaFile extends MediaAsset {
   ///                    fit: BoxFit.cover,
   ///                    )
   /// Note: If thumbnail returned is null you will have to call [MediaPickerBuilder.getThumbnail]
-  String thumbnailPath;
+  String? thumbnailPath;
 
   /// Supported on Android only
-  String mimeType;
+  String? mimeType;
 
   /// A convenient function that converts image orientation to quarter turns for widget [RotatedBox]
   /// i.e. RotatedBox(
@@ -51,15 +51,15 @@ class MediaFile extends MediaAsset {
   }
 
   MediaFile({
-    @required String id,
-    @required int dateAdded,
-    @required double duration,
-    @required int orientation,
-    @required MediaType type,
-    @required bool isLivePhoto,
-    @required this.path,
-    @required this.thumbnailPath,
-    @required this.mimeType,
+    required String? id,
+    required int? dateAdded,
+    required double? duration,
+    required int? orientation,
+    required MediaType type,
+    required bool? isLivePhoto,
+    required this.path,
+    required this.thumbnailPath,
+    required this.mimeType,
   }) : super(dateAdded: dateAdded, duration: duration, id: id, orientation: orientation, type: type, isLivePhoto: isLivePhoto);
 
   factory MediaFile.fromJson(Map<String, dynamic> json) => MediaFile(
@@ -68,7 +68,7 @@ class MediaFile extends MediaAsset {
         path: json['path'],
         thumbnailPath: json['thumbnailPath'],
         orientation: json['orientation'],
-        duration: (json['duration'] as num)?.toDouble(),
+        duration: (json['duration'] as num?)?.toDouble(),
         mimeType: json['mimeType'],
         type: MediaType.values[json['type']],
         isLivePhoto: json['isLivePhoto'],
