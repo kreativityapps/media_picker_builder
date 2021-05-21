@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:media_picker_builder/data/album.dart';
 import 'package:media_picker_builder/data/media_asset.dart';
 import 'package:media_picker_builder/data/media_file.dart';
-import 'package:meta/meta.dart';
 
 import 'data/media_file.dart';
 
@@ -20,9 +19,6 @@ class MediaPickerBuilder {
     required DateTime end,
     List<MediaType> types = MediaType.values,
   }) async {
-    assert(start != null);
-    assert(end != null);
-
     final startUtc = start.toUtc();
     final endUtc = end.toUtc();
 
@@ -39,8 +35,6 @@ class MediaPickerBuilder {
   }
 
   static Future<MediaFile> retrieveMediaFile({required MediaAsset asset, ValueChanged<double?>? progress}) async {
-    assert(asset != null);
-
     StreamSubscription<GetMediaFileEvent>? subscription;
 
     // Only implemented on iOS for the time being

@@ -1,5 +1,4 @@
 import 'package:media_picker_builder/data/media_file.dart';
-import 'package:meta/meta.dart';
 
 class MediaAsset {
   /// Unique identifier for the file
@@ -41,8 +40,6 @@ class MediaAsset {
   }
 
   factory MediaAsset.fromJson(Map<String, dynamic> json) {
-    if (json == null) return null;
-
     return MediaAsset(
       id: json['id'],
       dateAdded: json['dateAdded'],

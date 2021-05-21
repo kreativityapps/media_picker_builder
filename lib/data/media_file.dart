@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:media_picker_builder/data/media_asset.dart';
-import 'package:meta/meta.dart';
 
 enum MediaType { image, video }
 enum OrientationType { portrait, landscape }
